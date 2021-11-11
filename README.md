@@ -1,4 +1,4 @@
-# 1. Description
+# 1. Introduction
 The project of big data class.
 
 # 2.Data preprocessing/analytics
