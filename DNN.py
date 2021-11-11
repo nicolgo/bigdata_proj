@@ -3,7 +3,7 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import torch.utils.data as Data
-
+pd.options.mode.chained_assignment = None
 
 class NeuralNet(nn.Module):
     def __init__(self):
@@ -24,7 +24,8 @@ class NeuralNet(nn.Module):
 
 def create_dataloader():
 
-    data = pd.read_csv('../BankChurners.csv')
+    data0 = pd.read_csv('../BankChurners.csv')
+    data = data0.copy()
 
     # remove balance with value 0
     '''
@@ -37,6 +38,9 @@ def create_dataloader():
     '''
 
     x = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
+
+    # Feature Scaling / Standard Score
+    x = (x - x.mean()) / x.std()
     y = data['CreditLevel']
 
     # 5-7 cater to one hot
