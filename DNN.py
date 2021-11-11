@@ -11,7 +11,7 @@ class NeuralNet(nn.Module):
         self.fc1 = nn.Linear(7, 100)
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(100, 10)
+        self.fc2 = nn.Linear(100, 3)
         self.type = 'MLP'
 
     def forward(self, x):
@@ -21,11 +21,34 @@ class NeuralNet(nn.Module):
         out = self.fc2(x)
         return out
 
+
 def create_dataloader():
 
     data = pd.read_csv('../BankChurners.csv')
+
+    # remove balance with value 0
+    '''
+    data = data[data['Balance'] != 0]
+    '''
+
+    # train 5-7 respectively
+    '''
+    data = data[(data['CreditLevel'] >= 5) & (data['CreditLevel'] <= 7)]
+    '''
+
     x = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
     y = data['CreditLevel']
+
+    # 5-7 cater to one hot
+    '''
+    y[y == 5] = 1
+    y[y == 6] = 2
+    y[y == 7] = 3
+    '''
+
+    y[(y >= 1) & (y <= 4)] = 1
+    y[(y >= 5) & (y <= 7)] = 2
+    y[(y >= 8) & (y <= 10)] = 3
     y = y-1  # To cater to one hot
     x = x.astype('float32')
     x_dataset = torch.from_numpy(x.values)
@@ -43,6 +66,7 @@ def create_dataloader():
                                               shuffle=False)
 
     return train_loader, test_loader
+
 
 def train(train_loader, model, criterion, optimizer, num_epochs):
     # Train the model
@@ -62,6 +86,7 @@ def train(train_loader, model, criterion, optimizer, num_epochs):
             if (step + 1) % 10 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                     .format(epoch + 1, num_epochs, step + 1, total_step, loss.item()))
+
 
 def tst(test_loader, model):
     # Test the model
