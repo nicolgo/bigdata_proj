@@ -1,7 +1,17 @@
-# bigdata_proj
+# 1. Description
 The project of big data class.
 
-# File description
+# 2.Data preprocessing/analytics
+
+# 3.Model design and implementation
+
+# 4.Framework of federated learning
+
+# 5. Summary
+
+# 6. Reference
+
+
 ## solution for problem1(accuracy:20%)
 - `DNN.py`
 - *.ipynb
