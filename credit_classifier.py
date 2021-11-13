@@ -14,7 +14,7 @@ def normalize(dataset):
     return dataNorm
 
 
-def prepare_data(train_dataset, batch_size, need_unify,is_test):
+def prepare_data(train_dataset, batch_size, need_unify, is_test):
     x_train = torch.tensor(train_dataset.drop(
         'CreditLevel', axis=1).values.astype('float32'))
     y_values = train_dataset['CreditLevel'].values
@@ -24,7 +24,7 @@ def prepare_data(train_dataset, batch_size, need_unify,is_test):
         for i, s in enumerate(y_copy):
             if s < 4:
                 y_copy[i] = 0
-            elif s > 6:
+            elif s > 7:
                 y_copy[i] = 2
             else:
                 y_copy[i] = 1
@@ -46,15 +46,15 @@ class Net(nn.Module):
     def __init__(self, n_inputs, n_outputs):
         super(Net, self).__init__()
         # input to first hidden layer
-        self.hidden1 = nn.Linear(n_inputs, n_outputs*2)
+        self.hidden1 = nn.Linear(n_inputs, n_inputs*2)
         kaiming_uniform_(self.hidden1.weight, nonlinearity='relu')
         self.dropout1 = nn.Dropout(0.3)
         self.act1 = nn.ReLU()
         # second hidden layer
-        # self.hidden2 = nn.Linear(14, 10)
-        # kaiming_uniform_(self.hidden2.weight, nonlinearity='relu')
-        # self.dropout2 = nn.Dropout(0.3)
-        # self.act2 = nn.ReLU()
+        self.hidden2 = nn.Linear(n_inputs*2, n_outputs*2)
+        kaiming_uniform_(self.hidden2.weight, nonlinearity='relu')
+        self.dropout2 = nn.Dropout(0.3)
+        self.act2 = nn.ReLU()
         # third hidden layer and output
         self.hidden3 = nn.Linear(n_outputs*2, n_outputs)
         xavier_uniform_(self.hidden3.weight)
@@ -67,9 +67,9 @@ class Net(nn.Module):
         X = self.dropout1(X)
         X = self.act1(X)
         # second hidden layer
-        #X = self.hidden2(X)
-        #X = self.dropout2(X)
-        #X = self.act2(X)
+        X = self.hidden2(X)
+        X = self.dropout2(X)
+        X = self.act2(X)
         # output layer
         X = self.hidden3(X)
         #X = self.dropout3(X)
@@ -99,7 +99,7 @@ def train_model(train_dl, model):
                 running_loss = 0.0
 
 
-def evaluate_model(model, submodels, test_dl, test_dl_batch_size):
+def evaluate_model(model, test_dl, test_dl_batch_size):
     model.eval()
     accuracy = 0.0
     total = 0.0
@@ -127,6 +127,50 @@ def evaluate_model(model, submodels, test_dl, test_dl_batch_size):
             i, 100 * class_correct[i] / class_total[i]))
 
 
+def evaluate_model2(model, submodels, test_dl, test_dl_batch_size):
+    model.eval()
+    accuracy = 0.0
+    total = 0.0
+    number_of_labels = 10
+    class_correct = list(0. for i in range(number_of_labels))
+    class_total = list(0. for i in range(number_of_labels))
+    with torch.no_grad():
+        for data in test_dl:
+            inputs, targets = data
+            outputs = model(inputs)
+            _, rough_predicted = torch.max(outputs, 1)
+            for i in range(len(submodels)):
+                outputs = submodels[i](inputs)
+                if i == 0:
+                    _, sub_predicted0 = torch.max(outputs, 1)
+                elif i == 1:
+                    _, sub_predicted1 = torch.max(outputs, 1)
+                else:
+                    _, sub_predicted2 = torch.max(outputs, 1)
+
+            predicted = rough_predicted.clone().detach()
+            for i in range(len(rough_predicted)):
+                if rough_predicted[i] == 0:
+                    predicted[i] = sub_predicted0[i]
+                elif rough_predicted[i] == 1:
+                    predicted[i] = sub_predicted1[i]+4
+                else:
+                    predicted[i] = sub_predicted2[i]+8
+            total += targets.size(0)
+            accuracy += (predicted == targets).sum().item()
+            c = (predicted == targets).squeeze()
+            for i in range(test_dl_batch_size):
+                target = targets[i]
+                class_correct[target] += c[i].item()
+                class_total[target] += 1
+
+    accuracy = (100*accuracy/total)
+    print(f"Accuracy for all data: {accuracy}")
+    for i in range(number_of_labels):
+        print('Accuracy of %5d : %2d %%' % (
+            i, 100 * class_correct[i] / class_total[i]))
+
+
 if __name__ == '__main__':
     # data preprocessing
     all_dataset = pd.read_csv("BankChurners.csv")
@@ -135,21 +179,28 @@ if __name__ == '__main__':
     train_dataset, test_dataset = train_test_split(
         all_dataset, test_size=0.2)
     sub_dataset1 = train_dataset[train_dataset['CreditLevel'] <= 3].copy()
-    sub_dataset2 = train_dataset[train_dataset['CreditLevel'] >= 8].copy()
-    sub_dataset2["CreditLevel"] = sub_dataset2["CreditLevel"] - 8
-    sub_dataset3 = train_dataset[(train_dataset['CreditLevel'] >= 4) & (
+
+    sub_dataset2 = train_dataset[(train_dataset['CreditLevel'] >= 4) & (
         train_dataset['CreditLevel'] <= 7)].copy()
-    sub_dataset3["CreditLevel"] = sub_dataset3["CreditLevel"] - 4
+    sub_dataset2["CreditLevel"] = sub_dataset2["CreditLevel"] - 4
 
-    train_dl_batch_size = 100
-    test_dl_batch_size = 30
-    train_dl = prepare_data(train_dataset, train_dl_batch_size,need_unify=True,is_test=False)
-    sub_traindl_1 = prepare_data(sub_dataset1, train_dl_batch_size,need_unify=True,is_test=False)
-    sub_traindl_2 = prepare_data(sub_dataset2, train_dl_batch_size,need_unify=True,is_test=False)
-    sub_traindl_3 = prepare_data(sub_dataset3, train_dl_batch_size,need_unify=True,is_test=False)
+    sub_dataset3 = train_dataset[train_dataset['CreditLevel'] >= 8].copy()
+    sub_dataset3["CreditLevel"] = sub_dataset3["CreditLevel"] - 8
 
-    test_dl = prepare_data(test_dataset, test_dl_batch_size,need_unify=False,is_test=True)
-    
+    train_dl_batch_size = 200
+    test_dl_batch_size = 50
+    train_dl = prepare_data(
+        train_dataset, train_dl_batch_size, need_unify=True, is_test=False)
+    sub_traindl_1 = prepare_data(
+        sub_dataset1, train_dl_batch_size, need_unify=False, is_test=False)
+    sub_traindl_2 = prepare_data(
+        sub_dataset2, train_dl_batch_size, need_unify=False, is_test=False)
+    sub_traindl_3 = prepare_data(
+        sub_dataset3, train_dl_batch_size, need_unify=False, is_test=False)
+
+    test_dl = prepare_data(test_dataset, test_dl_batch_size,
+                           need_unify=False, is_test=True)
+
     class_model = Net(7, 3)
     sub_model_1 = Net(7, 4)
     sub_model_2 = Net(7, 4)
@@ -157,6 +208,7 @@ if __name__ == '__main__':
     train_model(train_dl, class_model)
     train_model(sub_traindl_1, sub_model_1)
     train_model(sub_traindl_2, sub_model_2)
-    train_model(sub_traindl_2, sub_model_3)
+    train_model(sub_traindl_3, sub_model_3)
     sub_models = [sub_model_1, sub_model_2, sub_model_3]
-    evaluate_model(class_model, sub_models, test_dl, test_dl_batch_size)
+    # evaluate_model(class_model, sub_models, test_dl, test_dl_batch_size)
+    evaluate_model2(class_model, sub_models, test_dl, test_dl_batch_size)
