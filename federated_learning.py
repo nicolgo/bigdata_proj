@@ -9,6 +9,8 @@ from torch.utils.data import Dataset, DataLoader, dataloader
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+from deep_learning import NeuralNet,get_bank_dataset, train
+
 
 class LeNet(nn.Module):
     def __init__(self, number_classes):
@@ -48,7 +50,7 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
     elif hasattr(training_data, 'img_label'):
         labels_train = training_data.img_label
         labels_valid = testing_data.img_label
-
+ 
     idxs_labels_train = np.vstack((idxs_train, labels_train))
     idxs_labels_train = idxs_labels_train[:, idxs_labels_train[1, :].argsort()]
     idxs_labels_valid = np.vstack((idxs_valid, labels_valid))
@@ -107,6 +109,20 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
 
     return data_partition_profile_train, data_partition_profile_valid
 
+def mnist_iid(dataset, num_users):
+    """
+    Sample I.I.D. client data from MNIST dataset
+    :param dataset:
+    :param num_users:
+    :return: dict of image index
+    """
+    num_items = int(len(dataset)/num_users)
+    dict_users, all_idxs = {}, [i for i in range(len(dataset))]
+    for i in range(num_users):
+        dict_users[i] = set(np.random.choice(all_idxs, num_items,
+                                             replace=False))
+        all_idxs = list(set(all_idxs) - dict_users[i])
+    return dict_users
 
 def data_organize(idxs_labels, labels):
     data_dict = {}
@@ -130,11 +146,12 @@ class DatasetSplit(Dataset):
 
     def __getitem__(self, item):
         image, label = self.dataset[self.idxs[item]]
-        return torch.tensor(image), torch.tensor(label)
+        # return torch.tensor(image), torch.tensor(label)
+        return image.clone().detach(), label.clone().detach()
 
 
-def local_trainer(dataset, model, global_round, device, local_epoch, batchsize):
-    dataloader = DataLoader(dataset, batch_size=batchsize, shuffle=True)
+def local_trainer(dataloader, model, local_epoch):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     criterion = nn.CrossEntropyLoss().to(device)
     model.train()
     epoch_loss = []
@@ -150,8 +167,8 @@ def local_trainer(dataset, model, global_round, device, local_epoch, batchsize):
             optimizer.step()
 
             if batch_idx % 10 == 0:
-                print('| Global Round : {} | Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    global_round, iter, batch_idx * len(images),
+                print('| Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    iter, batch_idx * len(images),
                     len(dataloader.dataset),
                     100. * batch_idx / len(dataloader), loss.item()))
             batch_loss.append(loss.item())
@@ -197,35 +214,39 @@ def average_weights(w):
 
 if __name__ == "__main__":
     # prepare the train dataset
-    train_dataset = torchvision.datasets.CIFAR10(
-        root='./data/', train=True, transform=transforms.ToTensor(), download=True)
-    test_dataset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, transform=transforms.ToTensor(), download=True)
+    train_dataset,test_dataset = get_bank_dataset()
     # split the dataset with dirichlet distribution
-    user_num = 10
+    user_num = 5
     alpha = 0.1
-    train_index, test_index = dirichlet_partition(
-        train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    # train_index, test_index = dirichlet_partition(
+    #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    train_index = mnist_iid(train_dataset,user_num)
+    test_index = mnist_iid(test_dataset,user_num)    
     train_data_list = []
     for user_index in range(user_num):
         train_data_list.append(DatasetSplit(
             train_dataset, train_index[user_index]))
     # prepare the test data
-    batch_size = 96
+    batch_size = 32
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     # define the model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    global_model = LeNet(10).to(device)
+    # global_model = LeNet(10).to(device)
+    global_model = NeuralNet().to(device)
     # start federated learning
-    global_rounds = 100
-    local_epochs = 5
+    global_rounds = 50
+    local_epochs = 12
     for round_idx in range(global_rounds):
         local_weights = []
         local_losses = []
         #global_acc = []
         for user_index in range(user_num):
-            model_weights, loss = local_trainer(train_data_list[user_index], copy.deepcopy(
-                global_model), round_idx, device, local_epochs, batch_size)
+            train_dataloader = DataLoader(
+                train_data_list[user_index], batch_size=batch_size, shuffle=True)
+            # model_weights, loss = local_trainer(train_dataloader, copy.deepcopy(
+            #     global_model), local_epochs)
+            model_weights,loss = train(train_dataloader,copy.deepcopy(
+                global_model), local_epochs)
             local_weights.append(copy.deepcopy(model_weights))
             local_losses.append(loss)
 
