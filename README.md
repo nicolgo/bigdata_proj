@@ -1,15 +1,20 @@
-# 1. Introduction
+# Big Data Project
+## 1 Introduction
 The project of big data class.
 
-# 2.Data preprocessing/analytics
+## 2 Data preprocessing/analytics
 
-# 3.Model design and implementation
+## 3 Model design and implementation
 
-# 4.Framework of federated learning
+## 4 Framework of federated learning
+Federated Learning is simply the decentralized form of Machine Learning.
+### 4.1 Federated Learning Process
 
-# 5. Summary
+### 4.2 Federated Learning Result
 
-# 6. Reference
+## 5 Summary
+
+## 6 Reference
 
 
 ## solution for problem1(accuracy:20%)
