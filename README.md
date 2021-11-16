@@ -20,9 +20,9 @@ The project of big data class.
 `New_BankChurners.csv` contains basic information of 1000 new bank’s customers and the credit level is unknown.
 
 ### 1.3 File Structure
-- `deep_learning.py` (accurancy:40%)
-- `machine_learning.py`(accurancy:40%)
-- `federated_learning.py` (accurancy:46% or above,using deep_learning model)
+- `deep_learning.py` (accuracy:40%)
+- `machine_learning.py`(accuracy:40%)
+- `federated_learning.py` (accuracy:46% or above,using deep_learning model)
 
 ## 2 Data preprocessing/analytics
 
