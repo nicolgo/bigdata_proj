@@ -15,6 +15,12 @@ from sklearn import linear_model
 
 from sklearn.metrics import accuracy_score
 from xgboost.sklearn import XGBClassifier
+from sklearn.datasets import make_classification
+from imblearn.over_sampling import SMOTE, ADASYN
+from collections import Counter
+
+# 当拓展特征时需要修改此参数 每加一个特征此常量++
+drop_col_index = 8 + 5
 
 
 def read_data(file_name='BankChurners.csv'):
@@ -102,7 +108,15 @@ def combine_feature(data_set):
                 feat.append(7)
             else:
                 feat.append(8)
-    data_set['NewFeature'] = feat
+    data_set['NewFeature1'] = feat
+
+    # new attempt
+
+    data_set['NewFeature2'] = data_set['HasCrCard'] + data_set['IsActiveMember']
+    data_set['NewFeature3'] = data_set['HasCrCard'] + data_set['Exited']
+    data_set['NewFeature4'] = data_set['IsActiveMember'] + data_set['Exited']
+    data_set['NewFeature5'] = data_set['NumOfProducts'] + data_set['IsActiveMember']
+
     return data_set
 
 
@@ -250,8 +264,8 @@ def fit_sub_level(model, train_data_set, xgb=False):
     :param train_data_set: 训练集
     :return:
     """
-    y_train = train_data_set[9]
-    x_train = train_data_set.drop(columns=9).drop(columns=10)
+    y_train = train_data_set[drop_col_index]
+    x_train = train_data_set.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
     if xgb:
         model.fit(x_train, y_train, eval_metric='auc')
     else:
@@ -317,24 +331,24 @@ if __name__ == '__main__':
     right_number = 0
 
     if not t_l1_dataset.empty:
-        t_l1_credit_answer = t_l1_dataset[9]
-        t_l1_dataset = t_l1_dataset.drop(columns=9).drop(columns=10)
+        t_l1_credit_answer = t_l1_dataset[drop_col_index]
+        t_l1_dataset = t_l1_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
         predict_l1 = predict_sub_credit(model=l1_model, test_data=t_l1_dataset)
         for i in range(0, len(t_l1_credit_answer)):
             if int(t_l1_credit_answer[i]) == int(predict_l1[i]):
                 right_number += 1
 
     if not t_l2_dataset.empty:
-        t_l2_credit_answer = t_l2_dataset[9]
-        t_l2_dataset = t_l2_dataset.drop(columns=9).drop(columns=10)
+        t_l2_credit_answer = t_l2_dataset[drop_col_index]
+        t_l2_dataset = t_l2_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
         predict_l2 = predict_sub_credit(model=l2_model, test_data=t_l2_dataset)
         for i in range(0, len(t_l2_credit_answer)):
             if int(t_l2_credit_answer[i]) == int(predict_l2[i]):
                 right_number += 1
 
     if not t_l3_dataset.empty:
-        t_l3_credit_answer = t_l3_dataset[9]
-        t_l3_dataset = t_l3_dataset.drop(columns=9).drop(columns=10)
+        t_l3_credit_answer = t_l3_dataset[drop_col_index]
+        t_l3_dataset = t_l3_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
         predict_l3 = predict_sub_credit(model=l3_model, test_data=t_l3_dataset)
         for i in range(0, len(t_l3_credit_answer)):
             if int(t_l3_credit_answer[i]) == int(predict_l3[i]):
@@ -342,31 +356,3 @@ if __name__ == '__main__':
 
     sum_number = len(d_test_set)
     print(right_number / sum_number)
-
-    # t_l1_credit_answer = t_l1_dataset[8]
-    # t_l2_credit_answer = t_l2_dataset[8]
-    # t_l3_credit_answer = t_l3_dataset[8]
-    #
-    # t_l1_dataset = t_l1_dataset.drop(columns=8).drop(columns=9)
-    # t_l2_dataset = t_l2_dataset.drop(columns=8).drop(columns=9)
-    # t_l3_dataset = t_l3_dataset.drop(columns=8).drop(columns=9)
-    #
-    # predict_l1 = predict_sub_credit(model=l1_model, test_data=t_l1_dataset)
-    # predict_l2 = predict_sub_credit(model=l2_model, test_data=t_l2_dataset)
-    # predict_l3 = predict_sub_credit(model=l3_model, test_data=t_l3_dataset)
-    #
-    # sum_number = len(predict_l1) + len(predict_l2) + len(predict_l3)
-    # right_number = 0
-    # for i in range(0, len(t_l1_credit_answer)):
-    #     if int(t_l1_credit_answer[i]) == int(predict_l1[i]):
-    #         right_number += 1
-    #
-    # for i in range(0, len(t_l2_credit_answer)):
-    #     if int(t_l2_credit_answer[i]) == int(predict_l2[i]):
-    #         right_number += 1
-    #
-    # for i in range(0, len(t_l3_credit_answer)):
-    #     if int(t_l3_credit_answer[i]) == int(predict_l3[i]):
-    #         right_number += 1
-    #
-    # print(right_number / sum_number)
