@@ -9,7 +9,7 @@ from torch.utils.data import Dataset, DataLoader, dataloader
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-from DNN import NeuralNet,get_bank_dataset, train
+from deep_learning import NeuralNet,get_bank_dataset, train
 
 
 class LeNet(nn.Module):
