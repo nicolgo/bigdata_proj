@@ -7,9 +7,10 @@ import torch.nn.functional as F
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, dataloader
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
-from deep_learning import NeuralNet,get_bank_dataset, train
+from deep_learning import NeuralNet, get_bank_dataset, train
 
 
 class LeNet(nn.Module):
@@ -22,7 +23,7 @@ class LeNet(nn.Module):
         self.conv2 = nn.Conv2d(12, 16, kernel_size=5)
         self.conv4 = nn.Conv2d(16, 20, kernel_size=3,
                                stride=1, padding=1, bias=False)
-        self.fc1 = nn.Linear(20*5*5, 120)
+        self.fc1 = nn.Linear(20 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, number_classes)
 
@@ -50,7 +51,7 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
     elif hasattr(training_data, 'img_label'):
         labels_train = training_data.img_label
         labels_valid = testing_data.img_label
- 
+
     idxs_labels_train = np.vstack((idxs_train, labels_train))
     idxs_labels_train = idxs_labels_train[:, idxs_labels_train[1, :].argsort()]
     idxs_labels_valid = np.vstack((idxs_valid, labels_valid))
@@ -71,15 +72,15 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
     # Distribute rest data
     for label in data_train_dict:
         proportions = np.random.dirichlet(np.repeat(alpha, user_num))
-        proportions_train = len(data_train_dict[label])*proportions
+        proportions_train = len(data_train_dict[label]) * proportions
         proportions_valid = len(data_valid_dict[label]) * proportions
 
         for user in data_partition_profile_train:
-
-            data_partition_profile_train[user]   \
-                = set.union(set(np.random.choice(data_train_dict[label], int(proportions_train[user]), replace=False)), data_partition_profile_train[user])
+            data_partition_profile_train[user] \
+                = set.union(set(np.random.choice(data_train_dict[label], int(proportions_train[user]), replace=False)),
+                            data_partition_profile_train[user])
             data_train_dict[label] = list(
-                set(data_train_dict[label])-data_partition_profile_train[user])
+                set(data_train_dict[label]) - data_partition_profile_train[user])
 
             data_partition_profile_valid[user] = set.union(set(
                 np.random.choice(data_valid_dict[label], int(proportions_valid[user]),
@@ -109,6 +110,7 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
 
     return data_partition_profile_train, data_partition_profile_valid
 
+
 def mnist_iid(dataset, num_users):
     """
     Sample I.I.D. client data from MNIST dataset
@@ -116,13 +118,14 @@ def mnist_iid(dataset, num_users):
     :param num_users:
     :return: dict of image index
     """
-    num_items = int(len(dataset)/num_users)
+    num_items = int(len(dataset) / num_users)
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
         dict_users[i] = set(np.random.choice(all_idxs, num_items,
                                              replace=False))
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
+
 
 def data_organize(idxs_labels, labels):
     data_dict = {}
@@ -170,9 +173,9 @@ def local_trainer(dataloader, model, local_epoch):
                 print('| Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     iter, batch_idx * len(images),
                     len(dataloader.dataset),
-                    100. * batch_idx / len(dataloader), loss.item()))
+                          100. * batch_idx / len(dataloader), loss.item()))
             batch_loss.append(loss.item())
-        epoch_loss.append(sum(batch_loss)/len(batch_loss))
+        epoch_loss.append(sum(batch_loss) / len(batch_loss))
     return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 
@@ -196,7 +199,7 @@ def inference(model, testloader, device):
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
         total += len(labels)
     loss /= batch_idx
-    accuracy = correct/total
+    accuracy = correct / total
     return accuracy, loss
 
 
@@ -214,14 +217,14 @@ def average_weights(w):
 
 if __name__ == "__main__":
     # prepare the train dataset
-    train_dataset,test_dataset = get_bank_dataset()
+    train_dataset, test_dataset = get_bank_dataset()
     # split the dataset with dirichlet distribution
     user_num = 5
     alpha = 0.1
     # train_index, test_index = dirichlet_partition(
     #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-    train_index = mnist_iid(train_dataset,user_num)
-    test_index = mnist_iid(test_dataset,user_num)    
+    train_index = mnist_iid(train_dataset, user_num)
+    test_index = mnist_iid(test_dataset, user_num)
     train_data_list = []
     for user_index in range(user_num):
         train_data_list.append(DatasetSplit(
@@ -239,13 +242,13 @@ if __name__ == "__main__":
     for round_idx in range(global_rounds):
         local_weights = []
         local_losses = []
-        #global_acc = []
+        # global_acc = []
         for user_index in range(user_num):
             train_dataloader = DataLoader(
                 train_data_list[user_index], batch_size=batch_size, shuffle=True)
             # model_weights, loss = local_trainer(train_dataloader, copy.deepcopy(
             #     global_model), local_epochs)
-            model_weights,loss = train(train_dataloader,copy.deepcopy(
+            model_weights, loss = train(train_dataloader, copy.deepcopy(
                 global_model), local_epochs)
             local_weights.append(copy.deepcopy(model_weights))
             local_losses.append(loss)

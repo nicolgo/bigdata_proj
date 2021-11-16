@@ -3,14 +3,132 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import torch.utils.data as Data
+from sklearn import neighbors
 from imblearn.over_sampling import SMOTENC
 pd.options.mode.chained_assignment = None
+
+
+def combine_feature(data_set):
+    """
+    组合特征
+    :param data_set: 数据集
+    :return: data_set
+    """
+    feat1 = []
+    feat2 = []
+    feat3 = []
+    for item in data_set.values:
+        products = item[4]
+        cr_card = item[5]
+        active_member = item[5]
+        exit = item[8]
+        if cr_card == 0:
+            if products == 1:
+                feat1.append(1)
+            elif products == 2:
+                feat1.append(2)
+            elif products == 3:
+                feat1.append(3)
+            else:
+                feat1.append(4)
+
+            if active_member == 0:
+                feat2.append(1)
+            else:
+                feat2.append(2)
+
+            if exit == 0:
+                feat3.append(1)
+            else:
+                feat3.append(2)
+        else:
+            if products == 1:
+                feat1.append(5)
+            elif products == 2:
+                feat1.append(6)
+            elif products == 3:
+                feat1.append(7)
+            else:
+                feat1.append(8)
+
+            if active_member == 0:
+                feat2.append(3)
+            else:
+                feat2.append(4)
+
+            if exit == 0:
+                feat3.append(3)
+            else:
+                feat3.append(4)
+    data_set['NewFeature1'] = feat1
+    data_set['NewFeature2'] = feat2
+    data_set['NewFeature3'] = feat3
+    return data_set
+
+
+def predict_balance(data_set):
+    """
+    将缺失的balance col数据补全
+    linear_model.LinearRegression() 线性回归补全
+    :param data_set: 读取数据集
+    :return: 补全后的data_set
+    """
+    zero_data = []
+    norm_data = []
+    for item in data_set.values:
+        if item[3] == 0:
+            zero_data.append(item)
+        else:
+            norm_data.append(item)
+
+    train = pd.DataFrame(norm_data)
+    test = pd.DataFrame(zero_data)
+    test = test.drop(columns=0).drop(columns=1).drop(columns=3)
+    x_test = test
+
+    y_train = train[3]
+    x_train = train.drop(columns=0).drop(columns=1).drop(columns=3)
+
+    x_train = (x_train - x_train.min()) / (x_train.max() - x_train.min())
+    x_test = (x_test - x_test.min()) / (x_test.max() - x_test.min())
+
+    model = neighbors.KNeighborsRegressor()
+    model.fit(x_train, y_train)
+    y_predict = model.predict(x_test)
+    res = []
+    index = 0
+    for item in data_set['Balance']:
+        if item != 0:
+            res.append(item)
+        else:
+            res.append(y_predict[index])
+            index += 1
+    data_set['Balance'] = res
+    return data_set
+
+
+def data_basic_clean(data_set):
+    """
+    数据基础预处理
+    :param data_set:
+    :return:
+    """
+    geo = []
+    for item in data_set['Geography']:
+        if item == 'Spain':
+            geo.append(1)
+        elif item == 'France':
+            geo.append(2)
+        else:
+            geo.append(0)
+    data_set['Geography'] = geo
+    return data_set
 
 
 class NeuralNet(nn.Module):
     def __init__(self):
         super(NeuralNet, self).__init__()
-        self.fc1 = nn.Linear(10, 256)
+        self.fc1 = nn.Linear(14, 256)
         self.relu = nn.LeakyReLU()
         self.fc2 = nn.Linear(256, 256)
         self.relu2 = nn.LeakyReLU()
@@ -44,13 +162,17 @@ def get_bank_dataset():
     data0 = pd.read_csv('BankChurners.csv')
     data = data0.copy()
 
+    data = combine_feature(data_set=data)
+    data = predict_balance(data_set=data)
+
     print(data.isnull().sum())
     print(data.describe())
 
     data['Tenure^2'] = data['Tenure'] ** 2
     data['Balance^2'] = data['Balance'] ** 2
+
     data['EstimatedSalary^2'] = data['EstimatedSalary'] ** 2
-    # data['NumOfProducts^2'] = data['NumOfProducts'] ** 2
+    data['NumOfProducts^2'] = data['NumOfProducts'] ** 2
 
     x0 = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
 
@@ -71,8 +193,7 @@ def get_bank_dataset():
 
     dataset = Data.TensorDataset(x_dataset, y_dataset)
 
-    train_dataset, test_dataset = train_test_split(
-        dataset, test_size=0.2, random_state=34)
+    train_dataset, test_dataset = train_test_split(dataset, test_size=0.2, random_state=34)
     return train_dataset, test_dataset
 
 
@@ -161,6 +282,7 @@ def train(train_loader, model, num_epochs):
             if (step + 1) % total_step == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, step + 1, total_step, loss.item()))
+                tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
     # print('Train accuracy is: {} %'.format(100 * correct / total))
@@ -185,15 +307,14 @@ def tst(test_loader, model):
 if __name__ == '__main__':
     # step 1: prepare dataset and create dataloader
     train_dataset, test_dataset = get_bank_dataset()
-    train_loader, test_loader = get_back_dataloader(
-        train_dataset, test_dataset)
+    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
     # train_loader, test_loader = create_dataloader()
 
     # step 2: instantiate neural network and design model
     model = NeuralNet()
 
     # step 3: train the model
-    train(train_loader, model, num_epochs=12)
+    train(train_loader, model, num_epochs=75)
 
     # step 4: test the model
-    tst(test_loader, model)
+    # tst(test_loader, model)
