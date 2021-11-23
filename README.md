@@ -56,6 +56,10 @@ Above all, it is obvious that features have weak correlation with the dependent 
 
 
 ### 2.2 Data Preprocessing
+Since feature balance means bank balance of the customer, reflection of how much customers leave for deposit, it is almost impossible equal to 0. The feature is added to be as an aspect of ability of customers to withstand risk. Therefore, even if balance is 0, it can't imply that the customer has no deposit or any extra money to accomplish the repayment. These abnormal values may result from ignorance of recording or just habits of customers to not put money in the bank. Thus, we apply linear regression to fill up these 0 values.  
+  
+  After dealing with balance feature  
+  <img width="342" alt="截屏2021-11-24 上午2 37 32" src="https://user-images.githubusercontent.com/93926853/143084069-b9369f2a-c5a4-4bb8-acb5-3b3bce0a653d.png">  
 
 ### 2.3 Feature Engineering
 
