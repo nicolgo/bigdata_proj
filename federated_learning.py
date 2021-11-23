@@ -1,4 +1,4 @@
-from deep_learning import NeuralNet, get_bank_dataset, train
+from deep_learning_full import NeuralNet, get_bank_dataset, train
 import copy
 import torch
 import torch.nn as nn
@@ -233,26 +233,45 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # global_model = LeNet(10).to(device)
     global_model = NeuralNet().to(device)
+    global_model.train()
     # start federated learning
-    global_rounds = 50
-    local_epochs = 12
+    global_rounds = 10
+    local_epochs = 20
+    global_loss, global_acc = [],[]
     for round_idx in range(global_rounds):
-        local_weights = []
-        local_losses = []
+        local_weights, local_losses = [], []
         # global_acc = []
+        global_model.train()
         for user_index in range(user_num):
             train_dataloader = DataLoader(
                 train_data_list[user_index], batch_size=batch_size, shuffle=True)
-            # model_weights, loss = local_trainer(train_dataloader, copy.deepcopy(
-            #     global_model), local_epochs)
+            # local train
             model_weights, loss, _ = train(train_dataloader, copy.deepcopy(
                 global_model), local_epochs)
             local_weights.append(copy.deepcopy(model_weights))
-            local_losses.append(loss)
+            local_losses.append(copy.deepcopy(loss))
 
         global_weight = average_weights(local_weights)
+        # update the global weights.
         global_model.load_state_dict(global_weight)
+
         test_acc, test_loss = inference(
             global_model, test_loader, device=device)
         print('Global Round :{}, the global accuracy is {:.3}%, and the global loss is {:.3}.'.format(
             round_idx, 100 * test_acc, test_loss))
+        global_acc.append(test_acc)
+        global_loss.append(test_loss)
+    
+    # plot the image
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.title('Loss vs Rounds')
+    plt.plot(range(len(global_loss)), global_loss, color='r')
+    plt.ylabel('Loss')
+    plt.xlabel('Rounds')
+
+    plt.figure()
+    plt.title('Acc vs Rounds')
+    plt.plot(range(len(global_acc)), global_acc, color='r')
+    plt.ylabel('Acc')
+    plt.xlabel('Rounds')

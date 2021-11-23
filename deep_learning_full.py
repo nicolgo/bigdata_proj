@@ -284,11 +284,11 @@ def train(train_loader, model, num_epochs):
             if (step + 1) % total_step == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, step + 1, total_step, loss.item()))
-                tst(test_loader, model)
+                # tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
     # print('Train accuracy is: {} %'.format(100 * correct / total))
-    return model.state_dict(), sum(epoch_loss)/len(epoch_loss)
+    return model.state_dict(), sum(epoch_loss)/len(epoch_loss), 1
 
 
 def tst(test_loader, model):
