@@ -212,10 +212,25 @@ def get_bank_dataset():
     x_dataset = torch.from_numpy(x.values)
     y_dataset = torch.from_numpy(y.values)
 
-    dataset = Data.TensorDataset(x_dataset, y_dataset)
+    x_train_dataset = x_dataset[: 8100]
+    y_train_dataset = y_dataset[: 8100]
 
-    train_dataset, test_dataset = train_test_split(dataset, test_size=0.1, random_state=1)
-    return train_dataset, test_dataset
+    x_test_dataset = x_dataset[8100:]
+    y_test_dataset = y_dataset[8100:]
+    train_data = []
+    test_data = []
+    for i in range(0, len(x_train_dataset)):
+        train_data.append((x_train_dataset[i], y_train_dataset[i]))
+
+    for i in range(0, len(x_test_dataset)):
+        test_data.append((x_test_dataset[i], y_test_dataset[i]))
+
+    #dataset = Data.TensorDataset(x_dataset, y_dataset)
+
+    # train_dataset, test_dataset = train_test_split(dataset, test_size=0.1, random_state=1)
+    # train_dataset, test_dataset = dataset[0: 8100], dataset[8100:]
+    # return train_dataset, test_dataset
+    return train_data, test_data
 
 
 def get_back_dataloader(train_dataset, test_dataset):
@@ -226,7 +241,6 @@ def get_back_dataloader(train_dataset, test_dataset):
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
                                               batch_size=32,
                                               shuffle=False)
-
     return train_loader, test_loader
 
 
@@ -269,7 +283,7 @@ def train(train_loader, model, num_epochs):
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
-    return best_model
+    return model.state_dict(), sum(epoch_loss)/len(epoch_loss), best_model
 
 
 def tst(test_loader, model):
@@ -294,5 +308,5 @@ if __name__ == '__main__':
     model = NeuralNet()
 
     # step 3: train the model
-    b_model = train(train_loader, model, num_epochs=12)
+    _, _, b_model = train(train_loader, model, num_epochs=12)
 
