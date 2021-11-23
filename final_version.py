@@ -261,7 +261,7 @@ def divide_dataset_2_levels(data_set):
     c1_dataset = []
     c2_dataset = []
     c3_dataset = []
-    for item in data_set.values:
+    for index, item in enumerate(data_set.values):
         if item[-1] == 0:
             c1_dataset.append(item)
         elif item[-1] == 1:
@@ -272,6 +272,36 @@ def divide_dataset_2_levels(data_set):
     c2_dataset = pd.DataFrame(c2_dataset)
     c3_dataset = pd.DataFrame(c3_dataset)
     return c1_dataset, c2_dataset, c3_dataset
+
+
+def divide_dataset_2_levels_test(data_set):
+    """
+    将集根据level分成三份
+    :param data_set: 训练数据集 / 结果集
+    :return: 三个level区分的数据集
+    """
+    c1_dataset = []
+    c2_dataset = []
+    c3_dataset = []
+    i1, i2, i3 = 0, 0, 0
+    dic = {}
+    for index, item in enumerate(data_set.values):
+        if item[-1] == 0:
+            dic['1_' + str(i1)] = index
+            i1 += 1
+            c1_dataset.append(item)
+        elif item[-1] == 1:
+            dic['2_' + str(i2)] = index
+            i2 += 1
+            c2_dataset.append(item)
+        else:
+            dic['3_' + str(i3)] = index
+            i3 += 1
+            c3_dataset.append(item)
+    c1_dataset = pd.DataFrame(c1_dataset)
+    c2_dataset = pd.DataFrame(c2_dataset)
+    c3_dataset = pd.DataFrame(c3_dataset)
+    return c1_dataset, c2_dataset, c3_dataset, dic
 
 
 def fit_sub_level(model, train_data_set, xgb=False, l2=False):
@@ -352,7 +382,7 @@ if __name__ == '__main__':
 
     # d_test_set = predict_level_classification(model=l_model, test_data=d_test_set)
     d_test_set['c_level'] = predict_test_class(l_model, test_set)
-    t_l1_dataset, t_l2_dataset, t_l3_dataset = divide_dataset_2_levels(data_set=d_test_set)
+    t_l1_dataset, t_l2_dataset, t_l3_dataset, dic = divide_dataset_2_levels_test(data_set=d_test_set)
 
 ################################################################################################
     right_number = 0
