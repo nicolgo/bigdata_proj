@@ -60,9 +60,12 @@ Since feature balance means bank balance of the customer, reflection of how much
   
   After dealing with balance feature  
   <img width="342" alt="截屏2021-11-24 上午2 37 32" src="https://user-images.githubusercontent.com/93926853/143084069-b9369f2a-c5a4-4bb8-acb5-3b3bce0a653d.png">  
+  
+  Feature Geography is categorical variable with no value meaning but just marks of different region. So, we need to change it into dummy variables but not value categorical variables.  
+  <img width="559" alt="截屏2021-11-24 上午2 45 25" src="https://user-images.githubusercontent.com/93926853/143085135-94ac6712-f413-419f-8d66-37308fc9b9e9.png">  
 
 ### 2.3 Feature Engineering
-
+There are only 8 features left after droping a unrelated feature CustomerId. Furthermore, left features has weak correlation with the response variable. Too few features of low correlation with response variable may lead to underfitting of model. Consequently, the key part of feature engineering is to excavate and construct new features added up to the origional feature set, so that some deep related features can be found out. In this way, the model fitting effect can be improved, and prediction result can be more convincing.  
 ## 3 Model design and implementation
 
 ## 4 Framework of federated learning
