@@ -233,7 +233,7 @@ def get_bank_dataset():
     return train_data, test_data
 
 
-def get_bank_dataloader(train_dataset, test_dataset):
+def get_back_dataloader(train_dataset, test_dataset):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=32,
                                                shuffle=True)
@@ -279,7 +279,6 @@ def train(train_loader, model, num_epochs):
                     print('model has been updated, best model saved.')
                     min_loss = loss.item()
                     best_model = model
-                # tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
@@ -300,13 +299,34 @@ def tst(test_loader, model):
         print('Accuracy of the network is: {} %'.format(100 * correct / total))
 
 
+def predict_test_class(model, test_loader):
+    c_level = []
+    for attribute, credit in test_loader:
+        outputs = model(attribute)
+        _, predicted = torch.max(outputs.data, 1)
+        c_level.extend(predicted.tolist())
+    return c_level
+
+
+def train_model_outer():
+    train_dataset, test_dataset = get_bank_dataset()
+
+    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+
+    model = NeuralNet()
+
+    _, _, final_model = train(train_loader, model, num_epochs=12)
+    return final_model, test_loader
+
+
 if __name__ == '__main__':
     train_dataset, test_dataset = get_bank_dataset()
 
-    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
+    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
 
     model = NeuralNet()
 
     # step 3: train the model
     _, _, b_model = train(train_loader, model, num_epochs=12)
 
+    predict_test_class(b_model, test_loader)
