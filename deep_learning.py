@@ -197,7 +197,7 @@ def get_bank_dataset():
     return train_dataset, test_dataset
 
 
-def get_back_dataloader(train_dataset, test_dataset):
+def get_bank_dataloader(train_dataset, test_dataset):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=32,
                                                shuffle=True)
@@ -307,7 +307,7 @@ def tst(test_loader, model):
 if __name__ == '__main__':
     # step 1: prepare dataset and create dataloader
     train_dataset, test_dataset = get_bank_dataset()
-    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
     # train_loader, test_loader = create_dataloader()
 
     # step 2: instantiate neural network and design model
