@@ -25,7 +25,11 @@ The project of big data class.
 - `federated_learning.py` (accuracy:46% or above,using deep_learning model)
 
 ## 2 Data preprocessing/analytics
-Limited by data sources and data acquisition methods, data obtained in real life is difficult to deal with because of missing values and outliers. Therefore, to ensure the assumptions of models optimize the model effect, data preprocessing is an essential part before building models. In view of the problem to be studied, there are three parts. First of all, exploratory data analysis is required to have a general comprehension of data structure of the issue, including the distribution of data, correlation between features and response variable and even some inspiration to model selection. Secondly, data preprocessing is to deal with the missing values and outliers to avoid negative influence on model construction and result prediction. Finally, features engineering contains many ways to keep and find features most relavent to the dependent variables, like feature selection, feature transformation and so on. In the case, since the given features are not efficient, feature construction is the main method chosen.
+Limited by data sources and data acquisition methods, data obtained in real life is difficult to deal with because of missing values and outliers. Therefore, to ensure the assumptions of models optimize the model effect, data preprocessing is an essential part before building models. 
+In view of the problem to be studied, there are three parts. 
+First of all, exploratory data analysis is required to have a general comprehension of data structure of the issue, including the distribution of data, correlation between features and response variable and even some inspiration to model selection. 
+Secondly, data preprocessing is to deal with the missing values and outliers to avoid negative influence on model construction and result prediction. 
+Finally, features engineering contains many ways to keep and find features most relavent to the dependent variables, like feature selection, feature transformation and so on. In the case, since the given features are not efficient, feature construction is the main method chosen.
 ### 2.1 Exploratory Data Analysis
 
 ### 2.2 Data Preprocessing
