@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from imblearn.over_sampling import SMOTENC
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import torch.utils.data as Data
@@ -330,3 +331,5 @@ if __name__ == '__main__':
     _, _, b_model = train(train_loader, model, num_epochs=12)
 
     predict_test_class(b_model, test_loader)
+
+    tst(test_loader, model)
