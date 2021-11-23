@@ -1,3 +1,4 @@
+from deep_learning import NeuralNet, get_bank_dataset, train
 import copy
 import torch
 import torch.nn as nn
@@ -9,8 +10,6 @@ from torch.utils.data import Dataset, DataLoader, dataloader
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
-from deep_learning import NeuralNet, get_bank_dataset, train
 
 
 class LeNet(nn.Module):
@@ -45,12 +44,14 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
     idxs_train = np.arange(len(training_data))
     idxs_valid = np.arange(len(testing_data))
 
-    if hasattr(training_data, 'targets'):
-        labels_train = training_data.targets
-        labels_valid = testing_data.targets
-    elif hasattr(training_data, 'img_label'):
-        labels_train = training_data.img_label
-        labels_valid = testing_data.img_label
+    labels_train = [label for _, label in training_data]
+    labels_valid = [label for _, label in testing_data]
+    # if hasattr(training_data, 'targets'):
+    #     labels_train = training_data.targets
+    #     labels_valid = testing_data.targets
+    # elif hasattr(training_data, 'img_label'):
+    #     labels_train = training_data.img_label
+    #     labels_valid = testing_data.img_label
 
     idxs_labels_train = np.vstack((idxs_train, labels_train))
     idxs_labels_train = idxs_labels_train[:, idxs_labels_train[1, :].argsort()]
@@ -173,7 +174,7 @@ def local_trainer(dataloader, model, local_epoch):
                 print('| Local Epoch : {} | [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     iter, batch_idx * len(images),
                     len(dataloader.dataset),
-                          100. * batch_idx / len(dataloader), loss.item()))
+                    100. * batch_idx / len(dataloader), loss.item()))
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss) / len(batch_loss))
     return model.state_dict(), sum(epoch_loss) / len(epoch_loss)
