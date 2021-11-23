@@ -218,7 +218,7 @@ def get_bank_dataset():
     return train_dataset, test_dataset
 
 
-def get_back_dataloader(train_dataset, test_dataset):
+def get_bank_dataloader(train_dataset, test_dataset):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=32,
                                                shuffle=True)
