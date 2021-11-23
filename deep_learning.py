@@ -4,7 +4,6 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import torch.utils.data as Data
 from sklearn import neighbors
-from imblearn.over_sampling import SMOTENC
 pd.options.mode.chained_assignment = None
 
 
@@ -138,7 +137,7 @@ class NeuralNet(nn.Module):
         self.relu4 = nn.LeakyReLU()
         self.fc5 = nn.Linear(256, 256)
         self.relu5 = nn.LeakyReLU()
-        self.fc6 = nn.Linear(256, 10)
+        self.fc6 = nn.Linear(256, 3)
         self.dropout = nn.Dropout(p=0)
         self.type = 'MLP'
 
@@ -156,6 +155,27 @@ class NeuralNet(nn.Module):
         x = self.fc6(x)
         out = self.dropout(x)
         return out
+
+
+def pick_credit_data_level(data_set):
+    """
+    将数据以credit分为三个等级 并加新列 c_level [0 1 2]
+    level 1 : 1 2 3
+    level 2 : 4 5 6 7 8
+    level 3 : 9 10
+    :param data_set:
+    :return: data_set
+    """
+    c_level = []
+    for item in data_set['CreditLevel']:
+        if 9 <= int(item) <= 10:
+            c_level.append(2)
+        elif 4 <= int(item) <= 8:
+            c_level.append(1)
+        else:
+            c_level.append(0)
+    data_set['CreditLevel'] = c_level
+    return data_set
 
 
 def get_bank_dataset():
@@ -179,12 +199,13 @@ def get_bank_dataset():
     # Feature Scaling / Standard Score
     x0 = (x0 - x0.mean()) / x0.std()
 
+    pick_credit_data_level(data)
     y0 = data['CreditLevel']
-    y0 = y0 - 1  # cater to one-hot
 
     # balance data
-    smote_nc = SMOTENC(categorical_features=[0, 2, 3, 4, 6], random_state=0)
-    x, y = smote_nc.fit_resample(x0, y0)
+    # smote_nc = SMOTENC(categorical_features=[0, 2, 3, 4, 6], random_state=0)
+    # x, y = smote_nc.fit_resample(x0, y0)
+    x, y = x0, y0
 
     x = x.astype('float32')
 
@@ -193,57 +214,11 @@ def get_bank_dataset():
 
     dataset = Data.TensorDataset(x_dataset, y_dataset)
 
-    train_dataset, test_dataset = train_test_split(dataset, test_size=0.2, random_state=34)
+    train_dataset, test_dataset = train_test_split(dataset, test_size=0.1, random_state=1)
     return train_dataset, test_dataset
 
 
 def get_bank_dataloader(train_dataset, test_dataset):
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=32,
-                                               shuffle=True)
-
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                              batch_size=32,
-                                              shuffle=False)
-
-    return train_loader, test_loader
-
-
-def create_dataloader():
-    data0 = pd.read_csv('BankChurners.csv')
-    data = data0.copy()
-
-    print(data.isnull().sum())
-    print(data.describe())
-
-    data['Tenure^2'] = data['Tenure'] ** 2
-    data['Balance^2'] = data['Balance'] ** 2
-    data['EstimatedSalary^2'] = data['EstimatedSalary'] ** 2
-    # data['NumOfProducts^2'] = data['NumOfProducts'] ** 2
-
-    x0 = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
-
-    # Feature Scaling / Standard Score
-    x0 = (x0 - x0.mean()) / x0.std()
-
-    y0 = data['CreditLevel']
-    y0 = y0 - 1  # cater to one-hot
-
-    # balance data
-    smote_nc = SMOTENC(categorical_features=[0, 2, 3, 4, 6], random_state=0)
-    x, y = smote_nc.fit_resample(x0, y0)
-
-    x = x.astype('float32')
-
-    x_dataset = torch.from_numpy(x.values)
-    y_dataset = torch.from_numpy(y.values)
-
-    dataset = Data.TensorDataset(x_dataset, y_dataset)
-
-    train_dataset, test_dataset = train_test_split(
-        dataset, test_size=0.2, random_state=34)
-
-    # Data loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=32,
                                                shuffle=True)
@@ -263,6 +238,10 @@ def train(train_loader, model, num_epochs):
     total = 0
     total_step = len(train_loader)
     epoch_loss = []
+
+    # init a big num for min, it will be updated in the following training process
+    min_loss = 100.0
+    best_model = model
     for epoch in range(num_epochs):
         batch_loss = []
         for step, (attribute, credit) in enumerate(train_loader):
@@ -282,11 +261,15 @@ def train(train_loader, model, num_epochs):
             if (step + 1) % total_step == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                       .format(epoch + 1, num_epochs, step + 1, total_step, loss.item()))
+                if min_loss > loss.item():
+                    print('model has been updated, best model saved.')
+                    min_loss = loss.item()
+                    best_model = model
                 tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
-    # print('Train accuracy is: {} %'.format(100 * correct / total))
-    return model.state_dict(), sum(epoch_loss)/len(epoch_loss)
+
+    return best_model
 
 
 def tst(test_loader, model):
@@ -297,7 +280,6 @@ def tst(test_loader, model):
         for attribute, credit in test_loader:
             outputs = model(attribute)
             _, predicted = torch.max(outputs.data, 1)
-            # print(predicted)
             total += credit.size(0)
             correct += (predicted == credit).sum().item()
 
@@ -305,16 +287,12 @@ def tst(test_loader, model):
 
 
 if __name__ == '__main__':
-    # step 1: prepare dataset and create dataloader
     train_dataset, test_dataset = get_bank_dataset()
-    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
-    # train_loader, test_loader = create_dataloader()
 
-    # step 2: instantiate neural network and design model
+    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+
     model = NeuralNet()
 
     # step 3: train the model
-    train(train_loader, model, num_epochs=75)
+    b_model = train(train_loader, model, num_epochs=12)
 
-    # step 4: test the model
-    # tst(test_loader, model)
