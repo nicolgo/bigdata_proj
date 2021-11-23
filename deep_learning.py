@@ -265,7 +265,7 @@ def train(train_loader, model, num_epochs):
                     print('model has been updated, best model saved.')
                     min_loss = loss.item()
                     best_model = model
-                tst(test_loader, model)
+                # tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
 
@@ -289,7 +289,7 @@ def tst(test_loader, model):
 if __name__ == '__main__':
     train_dataset, test_dataset = get_bank_dataset()
 
-    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
 
     model = NeuralNet()
 
