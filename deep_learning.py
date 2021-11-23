@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from imblearn.over_sampling import SMOTENC
-from sklearn.model_selection import train_test_split
 import pandas as pd
 import torch.utils.data as Data
 from sklearn import neighbors
@@ -83,11 +81,11 @@ def predict_balance(data_set):
 
     train = pd.DataFrame(norm_data)
     test = pd.DataFrame(zero_data)
-    test = test.drop(columns=0).drop(columns=1).drop(columns=3)
+    test = test.drop(columns=0).drop(columns=1).drop(columns=3).drop(columns=9)
     x_test = test
 
     y_train = train[3]
-    x_train = train.drop(columns=0).drop(columns=1).drop(columns=3)
+    x_train = train.drop(columns=0).drop(columns=1).drop(columns=3).drop(columns=9)
 
     x_train = (x_train - x_train.min()) / (x_train.max() - x_train.min())
     x_test = (x_test - x_test.min()) / (x_test.max() - x_test.min())
@@ -185,9 +183,6 @@ def get_bank_dataset():
 
     data = combine_feature(data_set=data)
     data = predict_balance(data_set=data)
-
-    print(data.isnull().sum())
-    print(data.describe())
 
     data['Tenure^2'] = data['Tenure'] ** 2
     data['Balance^2'] = data['Balance'] ** 2
@@ -300,6 +295,44 @@ def tst(test_loader, model):
         print('Accuracy of the network is: {} %'.format(100 * correct / total))
 
 
+def predict_output(model):
+    """
+    输出神经网络预测的最终测试集
+    :param model:
+    :return:
+    """
+    data0 = pd.read_csv('New_BankChurners.csv')
+    data = data0.copy()
+
+    data = combine_feature(data_set=data)
+    data = predict_balance(data_set=data)
+
+    data['Tenure^2'] = data['Tenure'] ** 2
+    data['Balance^2'] = data['Balance'] ** 2
+
+    data['EstimatedSalary^2'] = data['EstimatedSalary'] ** 2
+    data['NumOfProducts^2'] = data['NumOfProducts'] ** 2
+
+    x0 = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
+
+    # Feature Scaling / Standard Score
+    x0 = (x0 - x0.mean()) / x0.std()
+
+    x = x0
+
+    x = x.astype('float32')
+
+    x_dataset = torch.from_numpy(x.values)
+
+    out_data = []
+    for i in range(0, len(x_dataset)):
+        out_data.append((x_dataset[i], 1))
+    out_data = torch.utils.data.DataLoader(dataset=out_data, batch_size=32, shuffle=False)
+
+    c_level = predict_test_class(model, out_data)
+    return c_level
+
+
 def predict_test_class(model, test_loader):
     c_level = []
     for attribute, credit in test_loader:
@@ -333,3 +366,5 @@ if __name__ == '__main__':
     predict_test_class(b_model, test_loader)
 
     tst(test_loader, model)
+
+    predict_output(model)

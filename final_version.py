@@ -1,30 +1,13 @@
-import pandas as pd
-import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn import svm
-from sklearn.svm import SVC, LinearSVC
-from sklearn.tree import ExtraTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import ensemble
-from sklearn import neighbors
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import SGDClassifier
-from sklearn.tree import DecisionTreeClassifier
-from imblearn.over_sampling import SMOTENC
 from sklearn import linear_model
 
 from sklearn.metrics import accuracy_score
 from xgboost.sklearn import XGBClassifier
-import torch
-import torch.nn as nn
 import pandas as pd
-from sklearn.datasets import make_classification
-from imblearn.over_sampling import SMOTE, ADASYN
-from collections import Counter
 
 # 当拓展特征时需要修改此参数 每加一个特征此常量++
-from bigdata.deep_learning import train_model_outer, predict_test_class
+from bigdata.deep_learning import train_model_outer, predict_test_class, predict_output
 
 drop_col_index = 8 + 3
 
@@ -67,7 +50,48 @@ def predict_balance(data_set):
 
     model.fit(x_train, y_train)
     y_predict = model.predict(x_test)
-    print(y_predict)
+    res = []
+    index = 0
+    for item in data_set['Balance']:
+        if item != 0:
+            res.append(item)
+        else:
+            res.append(y_predict[index])
+            index += 1
+    data_set['Balance'] = res
+    return data_set
+
+
+def predict_balance_output(data_set):
+    """
+    将缺失的balance col数据补全
+    linear_model.LinearRegression() 线性回归补全
+    :param data_set: 读取数据集
+    :return: 补全后的data_set
+    """
+    zero_data = []
+    norm_data = []
+    for item in data_set.values:
+        if item[3] == 0:
+            zero_data.append(item)
+        else:
+            norm_data.append(item)
+
+    train = pd.DataFrame(norm_data)
+    test = pd.DataFrame(zero_data)
+    test = test.drop(columns=0).drop(columns=1).drop(columns=3).drop(columns=9)
+    x_test = test
+
+    y_train = train[3]
+    x_train = train.drop(columns=0).drop(columns=1).drop(columns=3).drop(columns=9)
+
+    x_train = (x_train - x_train.min()) / (x_train.max() - x_train.min())
+    x_test = (x_test - x_test.min()) / (x_test.max() - x_test.min())
+
+    model = linear_model.LinearRegression()
+
+    model.fit(x_train, y_train)
+    y_predict = model.predict(x_test)
     res = []
     index = 0
     for item in data_set['Balance']:
@@ -159,7 +183,6 @@ def data_basic_clean(data_set):
 
     data_set = (data_set - data_set.min()) / (data_set.max() - data_set.min())
     data_set['CreditLevel'] = res_col
-    print(data_set)
     return data_set
 
 
@@ -316,7 +339,6 @@ def fit_sub_level(model, train_data_set, xgb=False, l2=False):
     y_train = train_data_set[drop_col_index]
     x_train = train_data_set.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
     if l2:
-        print(y_train)
         from imblearn.over_sampling import SVMSMOTE
         smote_nc = SVMSMOTE(sampling_strategy={4: 1700, 5: 1700, 6: 1700, 7: 1700, 8: 1700}, random_state=0)
         x_train, y_train = smote_nc.fit_resample(x_train, y_train)
@@ -357,21 +379,21 @@ if __name__ == '__main__':
     l1_model = LogisticRegression()
     l1_model = RandomForestClassifier(n_estimators=400)
     l2_model = XGBClassifier(
-                        # 树的个数
-                        n_estimators=200, learning_rate=0.08, max_depth=15, subsample=1, seed=1000,
-                        # 用于控制是否后剪枝的参数,越大越保守，一般0.1、0.2这样子
-                        gamma=0,
-                        # 控制模型复杂度的权重值的L2正则化项参数，参数越大，模型越不容易过拟合。
-                        reg_lambda=1,
-                        # 最大增量步长，我们允许每个树的权重估计。
-                        max_delta_step=0,
-                        # 生成树时进行的列采样
-                        colsample_bytree=1,
-                        # 这个参数默认是 1，是每个叶子里面 h 的和至少是多少，对正负样本不均衡时的 0-1 分类而言
-                        # 假设 h 在 0.01 附近，min_child_weight 为 1 意味着叶子节点中最少需要包含 100 个样本。
-                        # 这个参数非常影响结果，控制叶子节点中二阶导的和的最小值，该参数值越小，越容易 过拟合。
-                        min_child_weight=1
-                )
+        # 树的个数
+        n_estimators=200, learning_rate=0.08, max_depth=15, subsample=1, seed=1000,
+        # 用于控制是否后剪枝的参数,越大越保守，一般0.1、0.2这样子
+        gamma=0,
+        # 控制模型复杂度的权重值的L2正则化项参数，参数越大，模型越不容易过拟合。
+        reg_lambda=1,
+        # 最大增量步长，我们允许每个树的权重估计。
+        max_delta_step=0,
+        # 生成树时进行的列采样
+        colsample_bytree=1,
+        # 这个参数默认是 1，是每个叶子里面 h 的和至少是多少，对正负样本不均衡时的 0-1 分类而言
+        # 假设 h 在 0.01 附近，min_child_weight 为 1 意味着叶子节点中最少需要包含 100 个样本。
+        # 这个参数非常影响结果，控制叶子节点中二阶导的和的最小值，该参数值越小，越容易 过拟合。
+        min_child_weight=1
+    )
     l2_model = RandomForestClassifier(n_estimators=600)
     l3_model = RandomForestClassifier(n_estimators=400)
 
@@ -384,7 +406,7 @@ if __name__ == '__main__':
     d_test_set['c_level'] = predict_test_class(l_model, test_set)
     t_l1_dataset, t_l2_dataset, t_l3_dataset, dic = divide_dataset_2_levels_test(data_set=d_test_set)
 
-################################################################################################
+    ################################################################################################
     right_number = 0
 
     if not t_l1_dataset.empty:
@@ -413,3 +435,42 @@ if __name__ == '__main__':
 
     sum_number = len(d_test_set)
     print(right_number / sum_number)
+
+    ################################################################################################
+    # output
+    final_test_data = pd.read_csv('New_BankChurners.csv')
+    final_test_data = final_test_data.copy()
+
+    final_test_data = predict_balance_output(data_set=final_test_data)
+    final_test_data = combine_feature(data_set=final_test_data)
+    final_test_data = data_basic_clean(data_set=final_test_data)
+
+    final_test_data['c_level'] = predict_output(l_model)
+    t_l1_dataset, t_l2_dataset, t_l3_dataset, dic = divide_dataset_2_levels_test(data_set=final_test_data)
+    res_arr = [1 for item in range(0, 1000)]
+
+    if not t_l1_dataset.empty:
+        t_l1_credit_answer = t_l1_dataset[drop_col_index]
+        t_l1_dataset = t_l1_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
+        predict_l1 = predict_sub_credit(model=l1_model, test_data=t_l1_dataset)
+        for i in range(0, len(t_l1_credit_answer)):
+            res_arr[dic['1_' + str(i)]] = int(predict_l1[i])
+
+    if not t_l2_dataset.empty:
+        t_l2_credit_answer = t_l2_dataset[drop_col_index]
+        t_l2_dataset = t_l2_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
+        predict_l2 = predict_sub_credit(model=l2_model, test_data=t_l2_dataset)
+        for i in range(0, len(t_l2_credit_answer)):
+            res_arr[dic['2_' + str(i)]] = int(predict_l2[i])
+
+    if not t_l3_dataset.empty:
+        t_l3_credit_answer = t_l3_dataset[drop_col_index]
+        t_l3_dataset = t_l3_dataset.drop(columns=drop_col_index).drop(columns=drop_col_index + 1)
+        predict_l3 = predict_sub_credit(model=l3_model, test_data=t_l3_dataset)
+        for i in range(0, len(t_l3_credit_answer)):
+            res_arr[dic['3_' + str(i)]] = int(predict_l3[i])
+
+    final_test_data = pd.read_csv('New_BankChurners.csv')
+    final_test_data['CreditLevel'] = res_arr
+    final_test_data.to_csv('final_output.csv')
+    print(res_arr)
