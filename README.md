@@ -32,6 +32,8 @@ Secondly, data preprocessing is to deal with the missing values and outliers to 
 Finally, features engineering contains many ways to keep and find features most relavent to the dependent variables, like feature selection, feature transformation and so on. In the case, since the given features are not efficient, feature construction is the main method chosen.  
 ### 2.1 Exploratory Data Analysis
 By observing the features of features and response variable, feature CustomerId obviously makes no difference to CreditLevel. Thus, we drop feature CustomerId in the following analysis.
+<img width="496" alt="截屏2021-11-24 上午1 06 26" src="https://user-images.githubusercontent.com/93926853/143077547-42acbc05-3cee-449a-a501-5f9cf5ad28b0.png">
+
 ### 2.2 Data Preprocessing
 
 ### 2.3 Feature Engineering
