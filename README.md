@@ -34,8 +34,9 @@ Finally, features engineering contains many ways to keep and find features most 
 By observing the features of features and response variable, feature CustomerId obviously makes no difference to CreditLevel. Thus, we drop feature CustomerId in the following analysis.  
 <img width="874" alt="截屏2021-11-24 上午12 38 50" src="https://user-images.githubusercontent.com/93926853/143077735-97826a64-3b8f-4d21-98e9-1f295aed714d.png">  
   
-  <img width="121" alt="截屏2021-11-24 上午2 12 38" src="https://user-images.githubusercontent.com/93926853/143080945-ef7fe092-adca-47cc-aadd-1a0cb270d5ce.png">  
 There is no missing values.  
+  <img width="121" alt="截屏2021-11-24 上午2 12 38" src="https://user-images.githubusercontent.com/93926853/143080945-ef7fe092-adca-47cc-aadd-1a0cb270d5ce.png">  
+
   
 The distribution of response variable  
 <img width="605" alt="截屏2021-11-24 上午12 39 52" src="https://user-images.githubusercontent.com/93926853/143079198-51c02f6a-9fdd-49b4-86b2-96ecdaef8fcb.png">  
