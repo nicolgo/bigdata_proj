@@ -12,34 +12,6 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-class LeNet(nn.Module):
-    def __init__(self, number_classes):
-        super(LeNet, self).__init__()
-
-        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
-        self.conv3 = nn.Conv2d(6, 12, kernel_size=3,
-                               stride=1, padding=1, bias=False)
-        self.conv2 = nn.Conv2d(12, 16, kernel_size=5)
-        self.conv4 = nn.Conv2d(16, 20, kernel_size=3,
-                               stride=1, padding=1, bias=False)
-        self.fc1 = nn.Linear(20 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, number_classes)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv3(x))
-        x = F.max_pool2d(x, 2)
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv4(x))
-        x = F.max_pool2d(x, 2)
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
 def dirichlet_partition(training_data, testing_data, alpha, user_num):
     idxs_train = np.arange(len(training_data))
     idxs_valid = np.arange(len(testing_data))
@@ -112,13 +84,7 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
     return data_partition_profile_train, data_partition_profile_valid
 
 
-def mnist_iid(dataset, num_users):
-    """
-    Sample I.I.D. client data from MNIST dataset
-    :param dataset:
-    :param num_users:
-    :return: dict of image index
-    """
+def bank_iid(dataset, num_users):
     num_items = int(len(dataset) / num_users)
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
@@ -127,6 +93,34 @@ def mnist_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+def bank_noniid(dataset, num_users):
+    """
+    Sample non-I.I.D client data from MNIST dataset
+    :param dataset:
+    :param num_users:
+    :return:
+    """
+    # 60,000 training imgs -->  200 imgs/shard X 300 shards
+    num_shards, num_imgs = 100, 150
+    idx_shard = [i for i in range(num_shards)]
+    dict_users = {i: np.array([]) for i in range(num_users)}
+    idxs = np.arange(num_shards*num_imgs)
+    # labels = dataset.train_labels.numpy()
+    labels = [label for _, label in dataset]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
+    idxs = idxs_labels[0, :]
+
+    # divide and assign 2 shards/client
+    for i in range(num_users):
+        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
+        idx_shard = list(set(idx_shard) - rand_set)
+        for rand in rand_set:
+            dict_users[i] = np.concatenate(
+                (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
+    return dict_users
 
 def data_organize(idxs_labels, labels):
     data_dict = {}
@@ -224,8 +218,10 @@ if __name__ == "__main__":
     alpha = 0.1
     # train_index, test_index = dirichlet_partition(
     #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-    train_index = mnist_iid(train_dataset, user_num)
-    test_index = mnist_iid(test_dataset, user_num)
+    train_index = bank_iid(train_dataset, user_num)
+    test_index = bank_iid(test_dataset, user_num)
+    # train_index = mnist_noniid(train_dataset,user_num)
+    # test_index = mnist_noniid(test_dataset,user_num)
     train_data_list = []
     for user_index in range(user_num):
         train_data_list.append(DatasetSplit(
@@ -249,7 +245,7 @@ if __name__ == "__main__":
                 train_data_list[user_index], batch_size=batch_size, shuffle=True)
             # model_weights, loss = local_trainer(train_dataloader, copy.deepcopy(
             #     global_model), local_epochs)
-            model_weights, loss = train(train_dataloader, copy.deepcopy(
+            model_weights, loss, _ = train(train_dataloader, copy.deepcopy(
                 global_model), local_epochs)
             local_weights.append(copy.deepcopy(model_weights))
             local_losses.append(loss)
