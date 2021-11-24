@@ -7,7 +7,7 @@ from xgboost.sklearn import XGBClassifier
 import pandas as pd
 
 # 当拓展特征时需要修改此参数 每加一个特征此常量++
-from bigdata.deep_learning import train_model_outer, predict_test_class, predict_output
+from deep_learning import train_model_outer, predict_test_class, predict_output
 
 drop_col_index = 8 + 3
 

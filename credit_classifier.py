@@ -46,17 +46,17 @@ class Net(nn.Module):
     def __init__(self, n_inputs, n_outputs):
         super(Net, self).__init__()
         # input to first hidden layer
-        self.hidden1 = nn.Linear(n_inputs, n_inputs*2)
+        self.hidden1 = nn.Linear(n_inputs, n_inputs*10)
         kaiming_uniform_(self.hidden1.weight, nonlinearity='relu')
-        self.dropout1 = nn.Dropout(0.3)
+        # self.dropout1 = nn.Dropout(0.3)
         self.act1 = nn.ReLU()
         # second hidden layer
-        self.hidden2 = nn.Linear(n_inputs*2, n_outputs*2)
+        self.hidden2 = nn.Linear(n_inputs*10, n_outputs*5)
         kaiming_uniform_(self.hidden2.weight, nonlinearity='relu')
-        self.dropout2 = nn.Dropout(0.3)
+        # self.dropout2 = nn.Dropout(0.3)
         self.act2 = nn.ReLU()
         # third hidden layer and output
-        self.hidden3 = nn.Linear(n_outputs*2, n_outputs)
+        self.hidden3 = nn.Linear(n_outputs*5, n_outputs)
         xavier_uniform_(self.hidden3.weight)
         #self.dropout3 = nn.Dropout(0.3)
         self.act3 = nn.Softmax(dim=1)
@@ -64,11 +64,11 @@ class Net(nn.Module):
     def forward(self, X):
         # input to first hidden layer
         X = self.hidden1(X)
-        X = self.dropout1(X)
+        # X = self.dropout1(X)
         X = self.act1(X)
         # second hidden layer
         X = self.hidden2(X)
-        X = self.dropout2(X)
+        # X = self.dropout2(X)
         X = self.act2(X)
         # output layer
         X = self.hidden3(X)
@@ -81,7 +81,7 @@ def train_model(train_dl, model):
     # define a Loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    num_epochs = 20
+    num_epochs = 50
     for epoch in range(num_epochs):
         running_loss = 0.0
         for i, (inputs, targets) in enumerate(train_dl):
@@ -153,7 +153,7 @@ def evaluate_model2(model, submodels, test_dl, test_dl_batch_size):
                 if rough_predicted[i] == 0:
                     predicted[i] = sub_predicted0[i]
                 elif rough_predicted[i] == 1:
-                    predicted[i] = sub_predicted1[i]+4
+                    predicted[i] = sub_predicted1[i]+3
                 else:
                     predicted[i] = sub_predicted2[i]+8
             total += targets.size(0)
@@ -178,11 +178,11 @@ if __name__ == '__main__':
     all_dataset = normalize(all_dataset)
     train_dataset, test_dataset = train_test_split(
         all_dataset, test_size=0.2)
-    sub_dataset1 = train_dataset[train_dataset['CreditLevel'] <= 3].copy()
+    sub_dataset1 = train_dataset[train_dataset['CreditLevel'] <= 2].copy()
 
-    sub_dataset2 = train_dataset[(train_dataset['CreditLevel'] >= 4) & (
+    sub_dataset2 = train_dataset[(train_dataset['CreditLevel'] >= 3) & (
         train_dataset['CreditLevel'] <= 7)].copy()
-    sub_dataset2["CreditLevel"] = sub_dataset2["CreditLevel"] - 4
+    sub_dataset2["CreditLevel"] = sub_dataset2["CreditLevel"] - 3
 
     sub_dataset3 = train_dataset[train_dataset['CreditLevel'] >= 8].copy()
     sub_dataset3["CreditLevel"] = sub_dataset3["CreditLevel"] - 8
@@ -202,8 +202,8 @@ if __name__ == '__main__':
                            need_unify=False, is_test=True)
 
     class_model = Net(7, 3)
-    sub_model_1 = Net(7, 4)
-    sub_model_2 = Net(7, 4)
+    sub_model_1 = Net(7, 3)
+    sub_model_2 = Net(7, 5)
     sub_model_3 = Net(7, 2)
     train_model(train_dl, class_model)
     train_model(sub_traindl_1, sub_model_1)
