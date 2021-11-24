@@ -1,4 +1,4 @@
-from deep_learning_full import NeuralNet, get_bank_dataset, train
+from deep_learning import NeuralNet, get_bank_dataset, train
 import copy
 import torch
 import torch.nn as nn
@@ -215,15 +215,15 @@ if __name__ == "__main__":
     train_dataset, test_dataset = get_bank_dataset()
     # split the dataset with dirichlet distribution
     user_num = 5
-    global_rounds = 5
-    local_epochs = 10
+    global_rounds = 150
+    local_epochs = 2
     alpha_acc = []
     # for alpha in np.arange(0.1,2,0.5):
-    # alpha = 0.1
-    # train_index, test_index = dirichlet_partition(
-    #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-    train_index = bank_iid(train_dataset, user_num)
-    test_index = bank_iid(test_dataset, user_num)
+    alpha = 5
+    train_index, test_index = dirichlet_partition(
+        train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    # train_index = bank_iid(train_dataset, user_num)
+    # test_index = bank_iid(test_dataset, user_num)
     # train_index = mnist_noniid(train_dataset,user_num)
     # test_index = mnist_noniid(test_dataset,user_num)
     train_data_list = []
@@ -264,19 +264,19 @@ if __name__ == "__main__":
         global_acc.append(test_acc)
         global_loss.append(test_loss)
     
-        # plot the image
-        # import matplotlib.pyplot as plt
-        # plt.figure()
-        # plt.title('Loss vs Rounds')
-        # plt.plot(range(len(global_loss)), global_loss, color='r')
-        # plt.ylabel('Loss')
-        # plt.xlabel('Rounds')
+    # plot the image
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.title('Loss vs Rounds')
+    plt.plot(range(len(global_loss)), global_loss, color='r')
+    plt.ylabel('Loss')
+    plt.xlabel('Rounds')
 
-        # plt.figure()
-        # plt.title('Acc vs Rounds')
-        # plt.plot(range(len(global_acc)), global_acc, color='r')
-        # plt.ylabel('Acc')
-        # plt.xlabel('Rounds')
+    plt.figure()
+    plt.title('Acc vs Rounds')
+    plt.plot(range(len(global_acc)), global_acc, color='r')
+    plt.ylabel('Acc')
+    plt.xlabel('Rounds')
 
         # g_acc, g_loss = inference(
         #         global_model, test_loader, device=device)
