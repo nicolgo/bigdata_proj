@@ -71,8 +71,16 @@ There are only 8 features left after droping a unrelated feature CustomerId. Fur
 ## 4 Framework of federated learning
 Federated Learning is simply the decentralized form of Machine Learning.
 ### 4.1 Federated Learning Process
-
+- divide dataset by IID or non-IID
+- foreach round:
+     - training on each clients with model and save weights
+     - update the model with avg_weig
+- predict
 ### 4.2 Federated Learning Result
+- IID distribution on 3-output and 10-output model
+![image](https://user-images.githubusercontent.com/17155788/143258673-c522854c-ea32-4b72-b0e4-6461b1d101e0.png)
+- Dirichlet distribution with a=0.1 and a=5 
+![image](https://user-images.githubusercontent.com/17155788/143258957-2ce65fe7-d6d0-4684-bf33-144a364e8a38.png)
 
 ## 5 Summary
 
