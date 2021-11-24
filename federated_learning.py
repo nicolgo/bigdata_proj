@@ -215,75 +215,75 @@ if __name__ == "__main__":
     train_dataset, test_dataset = get_bank_dataset()
     # split the dataset with dirichlet distribution
     user_num = 5
+    global_rounds = 5
+    local_epochs = 10
     alpha_acc = []
-    for alpha in np.arange(0.1,2,0.5):
-        # alpha = 0.1
-        train_index, test_index = dirichlet_partition(
-            train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-        # train_index = bank_iid(train_dataset, user_num)
-        # test_index = bank_iid(test_dataset, user_num)
-        # train_index = mnist_noniid(train_dataset,user_num)
-        # test_index = mnist_noniid(test_dataset,user_num)
-        train_data_list = []
-        for user_index in range(user_num):
-            train_data_list.append(DatasetSplit(
-                train_dataset, train_index[user_index]))
-        # prepare the test data
-        batch_size = 32
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-        # define the model
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # global_model = LeNet(10).to(device)
-        global_model = NeuralNet().to(device)
+    # for alpha in np.arange(0.1,2,0.5):
+    # alpha = 0.1
+    # train_index, test_index = dirichlet_partition(
+    #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    train_index = bank_iid(train_dataset, user_num)
+    test_index = bank_iid(test_dataset, user_num)
+    # train_index = mnist_noniid(train_dataset,user_num)
+    # test_index = mnist_noniid(test_dataset,user_num)
+    train_data_list = []
+    for user_index in range(user_num):
+        train_data_list.append(DatasetSplit(
+            train_dataset, train_index[user_index]))
+    # prepare the test data
+    batch_size = 32
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    # define the model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # global_model = LeNet(10).to(device)
+    global_model = NeuralNet().to(device)
+    global_model.train()
+    # start federated learning
+    global_loss, global_acc = [],[]
+    for round_idx in range(global_rounds):
+        local_weights, local_losses = [], []
+        # global_acc = []
         global_model.train()
-        # start federated learning
-        global_rounds = 5
-        local_epochs = 10
-        global_loss, global_acc = [],[]
-        for round_idx in range(global_rounds):
-            local_weights, local_losses = [], []
-            # global_acc = []
-            global_model.train()
-            for user_index in range(user_num):
-                train_dataloader = DataLoader(
-                    train_data_list[user_index], batch_size=batch_size, shuffle=True)
-                # local train
-                model_weights, loss, _ = train(train_dataloader, copy.deepcopy(
-                    global_model), local_epochs)
-                local_weights.append(copy.deepcopy(model_weights))
-                local_losses.append(copy.deepcopy(loss))
+        for user_index in range(user_num):
+            train_dataloader = DataLoader(
+                train_data_list[user_index], batch_size=batch_size, shuffle=True)
+            # local train
+            model_weights, loss, _ = train(train_dataloader, copy.deepcopy(
+                global_model), local_epochs)
+            local_weights.append(copy.deepcopy(model_weights))
+            local_losses.append(copy.deepcopy(loss))
 
-            global_weight = average_weights(local_weights)
-            # update the global weights.
-            global_model.load_state_dict(global_weight)
+        global_weight = average_weights(local_weights)
+        # update the global weights.
+        global_model.load_state_dict(global_weight)
 
-            test_acc, test_loss = inference(
-                global_model, test_loader, device=device)
-            print('Global Round :{}, the global accuracy is {:.3}%, and the global loss is {:.3}.'.format(
-                round_idx, 100 * test_acc, test_loss))
-            global_acc.append(test_acc)
-            global_loss.append(test_loss)
-        
-            # plot the image
-            # import matplotlib.pyplot as plt
-            # plt.figure()
-            # plt.title('Loss vs Rounds')
-            # plt.plot(range(len(global_loss)), global_loss, color='r')
-            # plt.ylabel('Loss')
-            # plt.xlabel('Rounds')
-
-            # plt.figure()
-            # plt.title('Acc vs Rounds')
-            # plt.plot(range(len(global_acc)), global_acc, color='r')
-            # plt.ylabel('Acc')
-            # plt.xlabel('Rounds')
-        g_acc, g_loss = inference(
-                global_model, test_loader, device=device)
-        alpha_acc.append(g_acc)
+        test_acc, test_loss = inference(
+            global_model, test_loader, device=device)
+        print('Global Round :{}, the global accuracy is {:.3}%, and the global loss is {:.3}.'.format(
+            round_idx, 100 * test_acc, test_loss))
+        global_acc.append(test_acc)
+        global_loss.append(test_loss)
     
-    import matplotlib.pyplot as plt
-    plt.figure()
-    plt.title('Acc vs Alpha')
-    plt.plot(np.arange(0.1,2,0.5), alpha_acc, color='r')
-    plt.ylabel('Acc')
-    plt.xlabel('Alpha')
+        # plot the image
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.title('Loss vs Rounds')
+        # plt.plot(range(len(global_loss)), global_loss, color='r')
+        # plt.ylabel('Loss')
+        # plt.xlabel('Rounds')
+
+        # plt.figure()
+        # plt.title('Acc vs Rounds')
+        # plt.plot(range(len(global_acc)), global_acc, color='r')
+        # plt.ylabel('Acc')
+        # plt.xlabel('Rounds')
+
+        # g_acc, g_loss = inference(
+        #         global_model, test_loader, device=device)
+        # alpha_acc.append(g_acc)
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # plt.title('Acc vs Alpha')
+    # plt.plot(np.arange(0.1,2,0.5), alpha_acc, color='r')
+    # plt.ylabel('Acc')
+    # plt.xlabel('Alpha')

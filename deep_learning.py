@@ -229,7 +229,7 @@ def get_bank_dataset():
     return train_data, test_data
 
 
-def get_back_dataloader(train_dataset, test_dataset):
+def get_bank_dataloader(train_dataset, test_dataset):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=32,
                                                shuffle=True)
@@ -242,7 +242,9 @@ def get_back_dataloader(train_dataset, test_dataset):
 
 def train(train_loader, model, num_epochs):
     # Loss and optimizer
-    criterion = nn.CrossEntropyLoss()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    criterion = nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     correct = 0
     total = 0
@@ -256,6 +258,7 @@ def train(train_loader, model, num_epochs):
         batch_loss = []
         for step, (attribute, credit) in enumerate(train_loader):
             # Forward pass
+            attribute,credit = attribute.to(device),credit.to(device)
             outputs = model(attribute)
             loss = criterion(outputs, credit.long())
 
@@ -345,7 +348,7 @@ def predict_test_class(model, test_loader):
 def train_model_outer():
     train_dataset, test_dataset = get_bank_dataset()
 
-    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
 
     model = NeuralNet()
 
@@ -356,7 +359,7 @@ def train_model_outer():
 if __name__ == '__main__':
     train_dataset, test_dataset = get_bank_dataset()
 
-    train_loader, test_loader = get_back_dataloader(train_dataset, test_dataset)
+    train_loader, test_loader = get_bank_dataloader(train_dataset, test_dataset)
 
     model = NeuralNet()
 
