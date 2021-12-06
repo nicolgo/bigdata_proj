@@ -211,52 +211,6 @@ def get_bank_dataloader(train_dataset, test_dataset):
     return train_loader, test_loader
 
 
-def create_dataloader():
-    data0 = pd.read_csv('BankChurners.csv')
-    data = data0.copy()
-
-    print(data.isnull().sum())
-    print(data.describe())
-
-    data['Tenure^2'] = data['Tenure'] ** 2
-    data['Balance^2'] = data['Balance'] ** 2
-    data['EstimatedSalary^2'] = data['EstimatedSalary'] ** 2
-    # data['NumOfProducts^2'] = data['NumOfProducts'] ** 2
-
-    x0 = data.drop(['CreditLevel', 'CustomerId', 'Geography'], axis=1)
-
-    # Feature Scaling / Standard Score
-    x0 = (x0 - x0.mean()) / x0.std()
-
-    y0 = data['CreditLevel']
-    y0 = y0 - 1  # cater to one-hot
-
-    # balance data
-    smote_nc = SMOTENC(categorical_features=[0, 2, 3, 4, 6], random_state=0)
-    x, y = smote_nc.fit_resample(x0, y0)
-
-    x = x.astype('float32')
-
-    x_dataset = torch.from_numpy(x.values)
-    y_dataset = torch.from_numpy(y.values)
-
-    dataset = Data.TensorDataset(x_dataset, y_dataset)
-
-    train_dataset, test_dataset = train_test_split(
-        dataset, test_size=0.2, random_state=34)
-
-    # Data loader
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=32,
-                                               shuffle=True)
-
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                              batch_size=32,
-                                              shuffle=False)
-
-    return train_loader, test_loader
-
-
 def train(train_loader, model, num_epochs):
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
