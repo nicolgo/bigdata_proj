@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, dataloader
 import ssl
+import matplotlib.pyplot as plt
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -93,6 +94,7 @@ def bank_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+
 def bank_noniid(dataset, num_users):
     """
     Sample non-I.I.D client data from MNIST dataset
@@ -121,6 +123,7 @@ def bank_noniid(dataset, num_users):
             dict_users[i] = np.concatenate(
                 (dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
     return dict_users
+
 
 def data_organize(idxs_labels, labels):
     data_dict = {}
@@ -210,6 +213,68 @@ def average_weights(w):
     return w_avg
 
 
+def survey(results, category_names):
+    """
+    Parameters
+    ----------
+    results : dict
+        A mapping from question labels to a list of answers per category.
+        It is assumed all lists contain the same number of entries and that
+        it matches the length of *category_names*.
+    category_names : list of str
+        The category labels.
+    """
+    labels = list(results.keys())
+    data = np.array(list(results.values()))
+    data_cum = data.cumsum(axis=1)
+    category_colors = plt.get_cmap('RdYlGn')(
+        np.linspace(0.1, 1, data.shape[1]))
+
+    fig, ax = plt.subplots(figsize=(9.2, 5))
+    ax.invert_yaxis()
+    ax.xaxis.set_visible(False)
+    ax.set_xlim(0, np.sum(data, axis=1).max())
+
+    for i, (colname, color) in enumerate(zip(category_names, category_colors)):
+        widths = data[:, i]
+        starts = data_cum[:, i] - widths
+        ax.barh(labels, widths, left=starts, height=0.5,
+                label=colname, color=color)
+        xcenters = starts + widths / 2
+
+        r, g, b, _ = color
+        text_color = 'white' if r * g * b < 0.5 else 'darkgrey'
+        for y, (x, c) in enumerate(zip(xcenters, widths)):
+            ax.text(x, y, str(int(c)), ha='center', va='center',
+                    color=text_color)
+    ax.legend(ncol=len(category_names), bbox_to_anchor=(0, 1),
+              loc='lower left', fontsize='small')
+
+    return fig, ax
+
+
+def draw_distribution(user_num, dataset):
+    clients = [i for i in range(user_num)]
+    global_dict = {}
+    for i in range(user_num):
+        client_data = dataset[i]
+        lables = [label for _, label in client_data]
+        labels_array = np.vstack(lables)
+        unique, counts = np.unique(labels_array, return_counts=True)
+        count_dict = dict(zip(unique, counts))
+        full_dict = {}
+        for j in range(10):
+            if j not in unique:
+                full_dict[j] = 0
+            else:
+                full_dict[j] = count_dict[j]
+        data = np.array(list(full_dict.values()))
+        global_dict[i] = data
+
+    survey(global_dict, range(10))
+    plt.show()
+
+
 if __name__ == "__main__":
     # prepare the train dataset
     train_dataset, test_dataset = get_bank_dataset()
@@ -218,18 +283,18 @@ if __name__ == "__main__":
     global_rounds = 150
     local_epochs = 2
     alpha_acc = []
-    # for alpha in np.arange(0.1,2,0.5):
-    alpha = 5
-    train_index, test_index = dirichlet_partition(
-        train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-    # train_index = bank_iid(train_dataset, user_num)
-    # test_index = bank_iid(test_dataset, user_num)
-    # train_index = mnist_noniid(train_dataset,user_num)
-    # test_index = mnist_noniid(test_dataset,user_num)
+    # alpha = 0.1, Non-IID; alpha = 1000, IID
+    # alpha = 0.1
+    # train_index, test_index = dirichlet_partition(
+    #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    train_index = bank_iid(train_dataset, user_num)
+    test_index = bank_iid(test_dataset, user_num)
+
     train_data_list = []
     for user_index in range(user_num):
         train_data_list.append(DatasetSplit(
             train_dataset, train_index[user_index]))
+    # draw_distribution(user_num, train_data_list)
     # prepare the test data
     batch_size = 32
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
@@ -239,7 +304,7 @@ if __name__ == "__main__":
     global_model = NeuralNet().to(device)
     global_model.train()
     # start federated learning
-    global_loss, global_acc = [],[]
+    global_loss, global_acc = [], []
     for round_idx in range(global_rounds):
         local_weights, local_losses = [], []
         # global_acc = []
@@ -263,7 +328,7 @@ if __name__ == "__main__":
             round_idx, 100 * test_acc, test_loss))
         global_acc.append(test_acc)
         global_loss.append(test_loss)
-    
+
     # plot the image
     import matplotlib.pyplot as plt
     plt.figure()
@@ -278,9 +343,9 @@ if __name__ == "__main__":
     plt.ylabel('Acc')
     plt.xlabel('Rounds')
 
-        # g_acc, g_loss = inference(
-        #         global_model, test_loader, device=device)
-        # alpha_acc.append(g_acc)
+    # g_acc, g_loss = inference(
+    #         global_model, test_loader, device=device)
+    # alpha_acc.append(g_acc)
     # import matplotlib.pyplot as plt
     # plt.figure()
     # plt.title('Acc vs Alpha')
