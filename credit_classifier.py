@@ -46,34 +46,40 @@ class Net(nn.Module):
     def __init__(self, n_inputs, n_outputs):
         super(Net, self).__init__()
         # input to first hidden layer
-        self.hidden1 = nn.Linear(n_inputs, n_inputs*10)
-        kaiming_uniform_(self.hidden1.weight, nonlinearity='relu')
-        # self.dropout1 = nn.Dropout(0.3)
+        self.hidden1 = nn.Linear(n_inputs, n_inputs*60)
         self.act1 = nn.ReLU()
         # second hidden layer
-        self.hidden2 = nn.Linear(n_inputs*10, n_outputs*5)
-        kaiming_uniform_(self.hidden2.weight, nonlinearity='relu')
-        # self.dropout2 = nn.Dropout(0.3)
+        self.hidden2 = nn.Linear(n_inputs*60, n_inputs*50)
         self.act2 = nn.ReLU()
         # third hidden layer and output
-        self.hidden3 = nn.Linear(n_outputs*5, n_outputs)
-        xavier_uniform_(self.hidden3.weight)
-        #self.dropout3 = nn.Dropout(0.3)
-        self.act3 = nn.Softmax(dim=1)
+        self.hidden3 = nn.Linear(n_inputs*50, n_inputs*40)
+        self.act3 = nn.ReLU()
+        self.hidden4 = nn.Linear(n_inputs*40, n_inputs*30)
+        self.act4 = nn.ReLU()
+        self.hidden5 = nn.Linear(n_inputs*30, n_inputs*20)
+        self.act5 = nn.ReLU()
+        self.hidden6 = nn.Linear(n_inputs*20, n_inputs*10)
+        self.act6 = nn.ReLU()
+        self.hidden7 = nn.Linear(n_inputs*10, n_outputs)
+        self.act7 = nn.Softmax(dim=1)
 
     def forward(self, X):
-        # input to first hidden layer
+        # input to hidden layers
         X = self.hidden1(X)
-        # X = self.dropout1(X)
         X = self.act1(X)
-        # second hidden layer
         X = self.hidden2(X)
-        # X = self.dropout2(X)
         X = self.act2(X)
-        # output layer
         X = self.hidden3(X)
-        #X = self.dropout3(X)
         X = self.act3(X)
+        X = self.hidden4(X)
+        X = self.act4(X)
+        X = self.hidden5(X)
+        X = self.act5(X)
+        X = self.hidden6(X)
+        X = self.act6(X)
+        # output layer
+        X = self.hidden7(X)
+        X = self.act7(X)
         return X
 
 
@@ -81,7 +87,7 @@ def train_model(train_dl, model):
     # define a Loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    num_epochs = 50
+    num_epochs = 100
     for epoch in range(num_epochs):
         running_loss = 0.0
         for i, (inputs, targets) in enumerate(train_dl):
@@ -188,7 +194,7 @@ if __name__ == '__main__':
     sub_dataset3["CreditLevel"] = sub_dataset3["CreditLevel"] - 8
 
     train_dl_batch_size = 200
-    test_dl_batch_size = 50
+    test_dl_batch_size = 100
     train_dl = prepare_data(
         train_dataset, train_dl_batch_size, need_unify=True, is_test=False)
     sub_traindl_1 = prepare_data(
