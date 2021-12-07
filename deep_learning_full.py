@@ -2,8 +2,11 @@ import torch
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 import torch.utils.data as Data
 from sklearn import neighbors
+from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTENC
 pd.options.mode.chained_assignment = None
 
@@ -124,11 +127,51 @@ def data_basic_clean(data_set):
     data_set['Geography'] = geo
     return data_set
 
+class Net(nn.Module):
+    def __init__(self, n_inputs, n_outputs):
+        super(Net, self).__init__()
+        # input to first hidden layer
+        self.hidden1 = nn.Linear(n_inputs, 256)
+        self.act1 = nn.ReLU()
+        # second hidden layer
+        self.hidden2 = nn.Linear(256, 256)
+        self.act2 = nn.ReLU()
+        # third hidden layer and output
+        self.hidden3 = nn.Linear(256, 256)
+        self.act3 = nn.ReLU()
+        self.hidden4 = nn.Linear(256, 256)
+        self.act4 = nn.ReLU()
+        self.hidden5 = nn.Linear(256, 256)
+        self.act5 = nn.ReLU()
+        self.hidden6 = nn.Linear(256, 256)
+        self.act6 = nn.ReLU()
+        self.hidden7 = nn.Linear(256, n_outputs)
+        self.act7 = nn.Softmax(dim=1)
+
+    def forward(self, X):
+        # input to hidden layers
+        X = self.hidden1(X)
+        X = self.act1(X)
+        X = self.hidden2(X)
+        X = self.act2(X)
+        X = self.hidden3(X)
+        X = self.act3(X)
+        X = self.hidden4(X)
+        X = self.act4(X)
+        X = self.hidden5(X)
+        X = self.act5(X)
+        X = self.hidden6(X)
+        X = self.act6(X)
+        # output layer
+        X = self.hidden7(X)
+        X = self.act7(X)
+        return X
+
 
 class NeuralNet(nn.Module):
     def __init__(self):
         super(NeuralNet, self).__init__()
-        self.fc1 = nn.Linear(14, 256)
+        self.fc1 = nn.Linear(7, 256)
         self.relu = nn.LeakyReLU()
         self.fc2 = nn.Linear(256, 256)
         self.relu2 = nn.LeakyReLU()
@@ -199,13 +242,32 @@ def get_bank_dataset():
     return train_dataset, test_dataset
 
 
+def get_bank_dataset2():
+    df = pd.read_csv("BankChurners.csv")
+    df = df.drop(['CustomerId', 'Geography'], axis=1)
+    df["CreditLevel"] = df["CreditLevel"]-1
+    X = df.iloc[:, 0:-1]
+    y = df.iloc[:, -1]
+    scaler = MinMaxScaler()
+    X = scaler.fit_transform(X)
+
+    x_dataset = torch.from_numpy(np.array(X)).float()
+    y_dataset = torch.from_numpy(np.array(y)).long()
+
+    dataset = Data.TensorDataset(x_dataset, y_dataset)
+
+    train_dataset, test_dataset = train_test_split(
+        dataset, test_size=0.2, random_state=34)
+    return train_dataset, test_dataset
+
+
 def get_bank_dataloader(train_dataset, test_dataset):
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=32,
+                                               batch_size=16,
                                                shuffle=True)
 
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                              batch_size=32,
+                                              batch_size=16,
                                               shuffle=False)
 
     return train_loader, test_loader
@@ -241,6 +303,7 @@ def train(train_loader, model, num_epochs):
                 # tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
+    # plt.plot(np.array(epoch_loss))
     # print('Train accuracy is: {} %'.format(100 * correct / total))
     return model.state_dict(), sum(epoch_loss)/len(epoch_loss), 1
 
@@ -262,16 +325,17 @@ def tst(test_loader, model):
 
 if __name__ == '__main__':
     # step 1: prepare dataset and create dataloader
-    train_dataset, test_dataset = get_bank_dataset()
+    train_dataset, test_dataset = get_bank_dataset2()
     train_loader, test_loader = get_bank_dataloader(
         train_dataset, test_dataset)
     # train_loader, test_loader = create_dataloader()
 
     # step 2: instantiate neural network and design model
-    model = NeuralNet()
+    # model = NeuralNet()
+    model =Net(7,10)
 
     # step 3: train the model
     train(train_loader, model, num_epochs=75)
 
     # step 4: test the model
-    # tst(test_loader, model)
+    tst(test_loader, model)

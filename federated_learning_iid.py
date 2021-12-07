@@ -254,7 +254,6 @@ def survey(results, category_names):
 
 
 def draw_distribution(user_num, dataset):
-    clients = [i for i in range(user_num)]
     global_dict = {}
     for i in range(user_num):
         client_data = dataset[i]
@@ -284,11 +283,11 @@ if __name__ == "__main__":
     local_epochs = 2
     alpha_acc = []
     # alpha = 0.1, Non-IID; alpha = 1000, IID
-    # alpha = 0.1
-    # train_index, test_index = dirichlet_partition(
-    #     train_dataset, test_dataset, alpha=alpha, user_num=user_num)
-    train_index = bank_iid(train_dataset, user_num)
-    test_index = bank_iid(test_dataset, user_num)
+    alpha = 0.1
+    train_index, test_index = dirichlet_partition(
+        train_dataset, test_dataset, alpha=alpha, user_num=user_num)
+    # train_index = bank_iid(train_dataset, user_num)
+    # test_index = bank_iid(test_dataset, user_num)
 
     train_data_list = []
     for user_index in range(user_num):
@@ -321,25 +320,31 @@ if __name__ == "__main__":
 
         # update the global weights.
         global_weight = average_weights(local_weights)
-        global_model.load_state_dict(global_weight)
+        tmp_model = copy.deepcopy(global_model)
+        tmp_model.load_state_dict(global_weight)
         # get global loss
         loss_avg = sum(local_losses)/len(local_losses)
-        loss_stats['train'].append(loss_avg)
+        
 
         list_acc, list_loss = [], []
-        global_model.eval()
+        tmp_model.eval()
         for user_index in range(user_num):
             train_dataloader = DataLoader(
                 train_data_list[user_index], batch_size=batch_size, shuffle=True)
-            acc, loss = inference(global_model, train_dataloader, device)
+            acc, loss = inference(tmp_model, train_dataloader, device)
             list_acc.append(acc)
             list_loss.append(loss)
-        accuracy_stats['train'].append(sum(list_acc)/len(list_acc))
+        
 
         test_acc, test_loss = inference(
-            global_model, test_loader, device=device)
+            tmp_model, test_loader, device=device)
         print('Global Round :{}, the global accuracy is {:.3}%, and the global loss is {:.3}.'.format(
             round_idx, 100 * test_acc, test_loss))
+        if(test_acc < 0.1):
+            continue    
+        global_model = copy.deepcopy(tmp_model)
+        loss_stats['train'].append(loss_avg)
+        accuracy_stats['train'].append(sum(list_acc)/len(list_acc))
         accuracy_stats['test'].append(test_acc)
         loss_stats['test'].append(test_loss)
 
