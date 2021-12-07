@@ -27,7 +27,7 @@ The project of big data class.
 - `federated_learning.py`: federated learning module, include iid and non-iid, FedAvg and so on.
 - `federated_learning_noiid`: improvements of FL with non-iid data.
 
-## 2 Data preprocessing/analytics
+## 2 Data Processing/Analytics
 The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering, which is stated as follows. details can be seen at `data_preprocessing.ipynb` 
 ### 2.1 Exploratory Data Analysis
 By processing and observing the training data BankChurners.csv, it’s clear to show that there’s no missing values and the variable CustomerId contribute nothing to the result CreditLevel in the dataset. Then we drop the whole column of CustomerId. 
