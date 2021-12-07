@@ -20,12 +20,15 @@ The project of big data class.
 `New_BankChurners.csv` contains basic information of 1000 new bank’s customers and the credit level is unknown.
 
 ### 1.3 File Structure
-- `deep_learning.py` (accuracy:40%)
-- `machine_learning.py`(accuracy:40%)
-- `federated_learning.py` (accuracy:46% or above,using deep_learning model)
+- `data_preprocessing.ipynb`: data preprocessing
+- `deep_learning.py`: training with one DNN model,accuracy:about 20%
+- `deep_learning_subclass.py`: In this file, we use one subclass model and three clarifiers to train, accuracy about 21.6%
+- `ml_with_nn.py`: deep learning + machine learning, 37.22%
+- `federated_learning.py`: federated learning module, include iid and non-iid, FedAvg and so on.
+- `federated_learning_noiid`: improvements of FL with non-iid data.
 
 ## 2 Data preprocessing/analytics
-The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering, which is stated as follows.  
+The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering, which is stated as follows. details can be seen at `data_preprocessing.ipynb` 
 ### 2.1 Exploratory Data Analysis
 By processing and observing the training data BankChurners.csv, it’s clear to show that there’s no missing values and the variable CustomerId contribute nothing to the result CreditLevel in the dataset. Then we drop the whole column of CustomerId. 
 
@@ -43,7 +46,11 @@ As Balance is regarded as one of the most important variable for predicting the 
 ### 2.3 Feature Engineering
 After CustomerId is dropped, there’re only 8 explanatory features in total. Since the remaining explanatory features have less correlation with CreditLevel, we combine some features together to improve the model prediction accuracy and make it more convincing. 
 ## 3 Model design and implementation
-
+### 3.1 training with one model
+### 3.2 1 subclass model + 3 classifiers
+The implementation can be seen at `deep_learning_subclass.py` file
+### 3.3 deep learning + machine learning
+The implementation can be seen at `ml_with_nn.py` file
 ## 4 Framework of federated learning
 Federated Learning process
 - divide dataset by IID or non-IID
@@ -64,7 +71,7 @@ divided dataset randomly
 setting α to 1000
 ![image](https://user-images.githubusercontent.com/17155788/145030421-3f2516d1-0af6-4d08-b475-6bfa0043831b.png)
 
-- non-IID data
+- non-IID data(setting α to 0.1)
 ![image](https://user-images.githubusercontent.com/17155788/145030468-02689710-6bc5-4637-8158-bf1729085b68.png)
 
 ### 4.2 Federated Learning Result
