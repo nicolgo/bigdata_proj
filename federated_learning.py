@@ -1,4 +1,4 @@
-from deep_learning import NeuralNet, get_bank_dataset, train
+from deep_learning_full import Net, get_bank_dataset2, train
 import copy
 import torch
 import torch.nn as nn
@@ -277,7 +277,7 @@ def draw_distribution(user_num, dataset):
 
 if __name__ == "__main__":
     # prepare the train dataset
-    train_dataset, test_dataset = get_bank_dataset()
+    train_dataset, test_dataset = get_bank_dataset2()
     # split the dataset with dirichlet distribution
     user_num = 5
     global_rounds = 150
@@ -296,15 +296,16 @@ if __name__ == "__main__":
             train_dataset, train_index[user_index]))
     # draw_distribution(user_num, train_data_list)
     # prepare the test data
-    batch_size = 32
+    batch_size = 16
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     # define the model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # global_model = LeNet(10).to(device)
-    global_model = NeuralNet().to(device)
+    global_model = Net(7, 10).to(device)
     global_model.train()
     # start federated learning
-    global_loss, global_acc = [], []
+    loss_stats = {'train': [], "test": []}
+    accuracy_stats = {'train': [], "test": []}
     for round_idx in range(global_rounds):
         local_weights, local_losses = [], []
         # global_acc = []
@@ -318,30 +319,57 @@ if __name__ == "__main__":
             local_weights.append(copy.deepcopy(model_weights))
             local_losses.append(copy.deepcopy(loss))
 
-        global_weight = average_weights(local_weights)
         # update the global weights.
+        global_weight = average_weights(local_weights)
         global_model.load_state_dict(global_weight)
+        # get global loss
+        loss_avg = sum(local_losses)/len(local_losses)
+        loss_stats['train'].append(loss_avg)
+
+        list_acc, list_loss = [], []
+        global_model.eval()
+        for user_index in range(user_num):
+            train_dataloader = DataLoader(
+                train_data_list[user_index], batch_size=batch_size, shuffle=True)
+            acc, loss = inference(global_model, train_dataloader, device)
+            list_acc.append(acc)
+            list_loss.append(loss)
+        accuracy_stats['train'].append(sum(list_acc)/len(list_acc))
 
         test_acc, test_loss = inference(
             global_model, test_loader, device=device)
         print('Global Round :{}, the global accuracy is {:.3}%, and the global loss is {:.3}.'.format(
             round_idx, 100 * test_acc, test_loss))
-        global_acc.append(test_acc)
-        global_loss.append(test_loss)
+        accuracy_stats['test'].append(test_acc)
+        loss_stats['test'].append(test_loss)
+
+    # Create dataframes
+    import pandas as pd
+    import seaborn as sns
+    train_test_acc_df = pd.DataFrame.from_dict(accuracy_stats).reset_index().melt(
+        id_vars=['index']).rename(columns={"index": "rounds"})
+    train_test_loss_df = pd.DataFrame.from_dict(loss_stats).reset_index().melt(
+        id_vars=['index']).rename(columns={"index": "rounds"})
+    # Plot the dataframes
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(20, 7))
+    sns.lineplot(data=train_test_acc_df, x="rounds", y="value",
+                 hue="variable",  ax=axes[0]).set_title('Train-Test Accuracy/Epoch')
+    sns.lineplot(data=train_test_loss_df, x="rounds", y="value",
+                 hue="variable", ax=axes[1]).set_title('Train-Test Loss/Epoch')
 
     # plot the image
-    import matplotlib.pyplot as plt
-    plt.figure()
-    plt.title('Loss vs Rounds')
-    plt.plot(range(len(global_loss)), global_loss, color='r')
-    plt.ylabel('Loss')
-    plt.xlabel('Rounds')
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # plt.title('Training Loss vs Rounds')
+    # plt.plot(range(len(training_loss)), training_loss, color='r')
+    # plt.ylabel('Training Loss')
+    # plt.xlabel('Rounds')
 
-    plt.figure()
-    plt.title('Acc vs Rounds')
-    plt.plot(range(len(global_acc)), global_acc, color='r')
-    plt.ylabel('Acc')
-    plt.xlabel('Rounds')
+    # plt.figure()
+    # plt.title('Trainging Acc vs Rounds')
+    # plt.plot(range(len(training_acc)), training_acc, color='r')
+    # plt.ylabel('Training Acc')
+    # plt.xlabel('Rounds')
 
     # g_acc, g_loss = inference(
     #         global_model, test_loader, device=device)

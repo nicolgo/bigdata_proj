@@ -3,6 +3,7 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import torch.utils.data as Data
 from sklearn import neighbors
 from sklearn.preprocessing import MinMaxScaler
@@ -130,21 +131,21 @@ class Net(nn.Module):
     def __init__(self, n_inputs, n_outputs):
         super(Net, self).__init__()
         # input to first hidden layer
-        self.hidden1 = nn.Linear(n_inputs, n_inputs*60)
+        self.hidden1 = nn.Linear(n_inputs, 256)
         self.act1 = nn.ReLU()
         # second hidden layer
-        self.hidden2 = nn.Linear(n_inputs*60, n_inputs*50)
+        self.hidden2 = nn.Linear(256, 256)
         self.act2 = nn.ReLU()
         # third hidden layer and output
-        self.hidden3 = nn.Linear(n_inputs*50, n_inputs*40)
+        self.hidden3 = nn.Linear(256, 256)
         self.act3 = nn.ReLU()
-        self.hidden4 = nn.Linear(n_inputs*40, n_inputs*30)
+        self.hidden4 = nn.Linear(256, 256)
         self.act4 = nn.ReLU()
-        self.hidden5 = nn.Linear(n_inputs*30, n_inputs*20)
+        self.hidden5 = nn.Linear(256, 256)
         self.act5 = nn.ReLU()
-        self.hidden6 = nn.Linear(n_inputs*20, n_inputs*10)
+        self.hidden6 = nn.Linear(256, 256)
         self.act6 = nn.ReLU()
-        self.hidden7 = nn.Linear(n_inputs*10, n_outputs)
+        self.hidden7 = nn.Linear(256, n_outputs)
         self.act7 = nn.Softmax(dim=1)
 
     def forward(self, X):
@@ -275,7 +276,7 @@ def get_bank_dataloader(train_dataset, test_dataset):
 def train(train_loader, model, num_epochs):
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     correct = 0
     total = 0
     total_step = len(train_loader)
@@ -302,6 +303,7 @@ def train(train_loader, model, num_epochs):
                 # tst(test_loader, model)
             batch_loss.append(loss.item())
         epoch_loss.append(sum(batch_loss)/len(batch_loss))
+    # plt.plot(np.array(epoch_loss))
     # print('Train accuracy is: {} %'.format(100 * correct / total))
     return model.state_dict(), sum(epoch_loss)/len(epoch_loss), 1
 
