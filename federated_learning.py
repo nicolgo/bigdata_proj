@@ -2,11 +2,8 @@ from deep_learning_full import Net, get_bank_dataset2, train
 import copy
 import torch
 import torch.nn as nn
-import torchvision
-import torchvision.transforms as transforms
-import torch.nn.functional as F
 import numpy as np
-from torch.utils.data import Dataset, DataLoader, dataloader
+from torch.utils.data import Dataset, DataLoader
 import ssl
 import matplotlib.pyplot as plt
 
@@ -19,12 +16,6 @@ def dirichlet_partition(training_data, testing_data, alpha, user_num):
 
     labels_train = [label for _, label in training_data]
     labels_valid = [label for _, label in testing_data]
-    # if hasattr(training_data, 'targets'):
-    #     labels_train = training_data.targets
-    #     labels_valid = testing_data.targets
-    # elif hasattr(training_data, 'img_label'):
-    #     labels_train = training_data.img_label
-    #     labels_valid = testing_data.img_label
 
     idxs_labels_train = np.vstack((idxs_train, labels_train))
     idxs_labels_train = idxs_labels_train[:, idxs_labels_train[1, :].argsort()]
@@ -356,27 +347,3 @@ if __name__ == "__main__":
                  hue="variable",  ax=axes[0]).set_title('Train-Test Accuracy/Epoch')
     sns.lineplot(data=train_test_loss_df, x="rounds", y="value",
                  hue="variable", ax=axes[1]).set_title('Train-Test Loss/Epoch')
-
-    # plot the image
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.title('Training Loss vs Rounds')
-    # plt.plot(range(len(training_loss)), training_loss, color='r')
-    # plt.ylabel('Training Loss')
-    # plt.xlabel('Rounds')
-
-    # plt.figure()
-    # plt.title('Trainging Acc vs Rounds')
-    # plt.plot(range(len(training_acc)), training_acc, color='r')
-    # plt.ylabel('Training Acc')
-    # plt.xlabel('Rounds')
-
-    # g_acc, g_loss = inference(
-    #         global_model, test_loader, device=device)
-    # alpha_acc.append(g_acc)
-    # import matplotlib.pyplot as plt
-    # plt.figure()
-    # plt.title('Acc vs Alpha')
-    # plt.plot(np.arange(0.1,2,0.5), alpha_acc, color='r')
-    # plt.ylabel('Acc')
-    # plt.xlabel('Alpha')
