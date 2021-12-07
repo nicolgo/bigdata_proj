@@ -24,7 +24,7 @@ The project of big data class.
 - `machine_learning.py`(accuracy:40%)
 - `federated_learning.py` (accuracy:46% or above,using deep_learning model)
 
-## 2 Data preprocessing/analytics
+## 2 Data Processing/Analytics
 The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering, which is stated as follows.  
 ### 2.1 Exploratory Data Analysis
 By processing and observing the training data BankChurners.csv, it’s clear to show that there’s no missing values and the variable CustomerId contribute nothing to the result CreditLevel in the dataset. Then we drop the whole column of CustomerId. 
