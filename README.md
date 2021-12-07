@@ -59,17 +59,21 @@ uncomment the `draw_distribution` function in `federated_learning.py`
 
    run `federated_learning.py`
 - IID data
+divided dataset randomly
+![IID_simple](https://user-images.githubusercontent.com/17155788/145030135-27e57ff4-405b-4731-a830-ff68e98696fa.png)
+setting α to 1000
+![image](https://user-images.githubusercontent.com/17155788/145030421-3f2516d1-0af6-4d08-b475-6bfa0043831b.png)
 
 - non-IID data
+![image](https://user-images.githubusercontent.com/17155788/145030468-02689710-6bc5-4637-8158-bf1729085b68.png)
+
 ### 4.2 Federated Learning Result
 - IID result(`federated_learning.py`)
+![image](https://user-images.githubusercontent.com/17155788/145030554-a045ac0a-2efd-4969-b4c4-144c5423be56.png)
 
 - non-IID result(`federated_learning.py`) 
+![fl_non](https://user-images.githubusercontent.com/17155788/145030613-1122ec3a-d05b-40dd-bc14-464651a07417.png)
 
 - improved non-IID result(`federated_learning_iid.py`)
-
-
-## 5 Summary
-
-## 6 Reference
+![non_iid_improve](https://user-images.githubusercontent.com/17155788/145030630-bd6350c6-53ad-4647-88fd-c2cf0f8a2e5f.png)
 
