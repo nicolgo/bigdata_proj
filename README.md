@@ -69,18 +69,29 @@ There are only 8 features left after droping a unrelated feature CustomerId. Fur
 ## 3 Model design and implementation
 
 ## 4 Framework of federated learning
-Federated Learning is simply the decentralized form of Machine Learning.
-### 4.1 Federated Learning Process
+Federated Learning process
 - divide dataset by IID or non-IID
 - foreach round:
      - training on each clients with model and save weights
      - update the model with avg_weig
 - predict
+### 4.1 Data partition
+- Steps to generate result
+uncomment the `draw_distribution` function in `federated_learning.py`
+1. get IID: using `bank_iid` function or set α to 1000 use `dirichlet_partition` to get dataset
+2. get non-IID: set α to 0.1 and use `dirichlet_partition` to get dataset
+
+   run `federated_learning.py`
+- IID data
+
+- non-IID data
 ### 4.2 Federated Learning Result
-- IID distribution on 3-output and 10-output model
-![image](https://user-images.githubusercontent.com/17155788/143258673-c522854c-ea32-4b72-b0e4-6461b1d101e0.png)
-- Dirichlet distribution with a=0.1 and a=5 
-![image](https://user-images.githubusercontent.com/17155788/143258957-2ce65fe7-d6d0-4684-bf33-144a364e8a38.png)
+- IID result(`federated_learning.py`)
+
+- non-IID result(`federated_learning.py`) 
+
+- improved non-IID result(`federated_learning_iid.py`)
+
 
 ## 5 Summary
 
