@@ -28,14 +28,15 @@ The project of big data class.
 - `federated_learning_noiid`: improvements of FL with non-iid data.
 
 ## 2 Data Processing/Analytics
-The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering. Details can be seen at `data_processing.ipynb` 
+The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering. Details can be seen at [`data_processing.ipynb`](https://github.com/nicolgo/bigdata_proj/blob/main/data_processing.ipynb) 
 
 ## 3 Model design and implementation
 ### 3.1 training with one model
+The implementation can be seen at [`deep_learnig_full.py`](https://github.com/nicolgo/bigdata_proj/blob/main/deep_learning_full.py)
 ### 3.2 1 subclass model + 3 classifiers
-The implementation can be seen at `deep_learning_subclass.py` file
+The implementation can be seen at [`deep_learning_subclass.py`](https://github.com/nicolgo/bigdata_proj/blob/main/deep_learning_subclass.py) file
 ### 3.3 deep learning + machine learning
-The implementation can be seen at `ml_with_nn.py` file
+The implementation can be seen at [`ml_with_nn.py`](https://github.com/nicolgo/bigdata_proj/blob/main/ml_with_nn.py) file
 ## 4 Framework of federated learning
 Federated Learning process
 - divide dataset by IID or non-IID
@@ -45,7 +46,7 @@ Federated Learning process
 - predict
 ### 4.1 Data partition
 - Steps to generate result
-uncomment the `draw_distribution` function in `federated_learning.py`
+uncomment the `draw_distribution` function in [`federated_learning.py`](https://github.com/nicolgo/bigdata_proj/blob/main/federated_learning.py)
 1. get IID: using `bank_iid` function or set α to 1000 use `dirichlet_partition` to get dataset
 2. get non-IID: set α to 0.1 and use `dirichlet_partition` to get dataset
 
