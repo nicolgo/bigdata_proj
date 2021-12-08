@@ -20,7 +20,7 @@ The project of big data class.
 `New_BankChurners.csv` contains basic information of 1000 new bank’s customers and the credit level is unknown.
 
 ### 1.3 File Structure
-- `data_preprocessing.ipynb`: data preprocessing
+- `data_processing.ipynb`: data preprocessing
 - `deep_learning.py`: training with one DNN model,accuracy:about 20%
 - `deep_learning_subclass.py`: In this file, we use one subclass model and three clarifiers to train, accuracy about 21.6%
 - `ml_with_nn.py`: deep learning + machine learning, 37.22%
