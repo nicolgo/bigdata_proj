@@ -28,23 +28,8 @@ The project of big data class.
 - `federated_learning_noiid`: improvements of FL with non-iid data.
 
 ## 2 Data Processing/Analytics
-The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering, which is stated as follows. details can be seen at `data_preprocessing.ipynb` 
-### 2.1 Exploratory Data Analysis
-By processing and observing the training data BankChurners.csv, it’s clear to show that there’s no missing values and the variable CustomerId contribute nothing to the result CreditLevel in the dataset. Then we drop the whole column of CustomerId. 
+The procedure of data processing and analytics can be divided into three parts, including exploratory data analysis, data preprocessing and feature engineering. Details can be seen at `data_processing.ipynb` 
 
-<img width="874" alt="截屏2021-11-24 上午12 38 50" src="https://user-images.githubusercontent.com/93926853/143077735-97826a64-3b8f-4d21-98e9-1f295aed714d.png">  
-  
-There is no missing value, and weak correlation between features and imbalanced sample size of credit level appears according to the drawing subplot of features. Furthermore, many values for the variable Balance is zero in the dataset.   
-
-
-
-### 2.2 Data Preprocessing
-As Balance is regarded as one of the most important variable for predicting the credit level, values for this feature is hardly possible equal to zero. We use linear regression model to fill up zero values in Balance. We change the feature Geography into dummy variables since it only shows different regions and has no meaning in our model. 
-
-  <img width="559" alt="截屏2021-11-24 上午2 45 25" src="https://user-images.githubusercontent.com/93926853/143085135-94ac6712-f413-419f-8d66-37308fc9b9e9.png">  
-
-### 2.3 Feature Engineering
-After CustomerId is dropped, there’re only 8 explanatory features in total. Since the remaining explanatory features have less correlation with CreditLevel, we combine some features together to improve the model prediction accuracy and make it more convincing. 
 ## 3 Model design and implementation
 ### 3.1 training with one model
 ### 3.2 1 subclass model + 3 classifiers
